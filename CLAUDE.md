@@ -5,6 +5,8 @@ EPUB book translator (Claude Code skill). Entry point for the skill itself is `S
 ## Commands
 - Test: `pytest -q` (dev deps: `requirements-dev.txt`)
 
+This repo was forked from `fredchu/book-translator` but is now independent. Do not plan around upstream merges, rebases or PRs.
+
 ## Where things live
 - Plans: `docs/plans/` (each phase has a "done when" — treat it as the exit criteria)
 - Decision log: `docs/DECISIONS.md` — deliberate tradeoffs a reasonable person might have chosen differently
