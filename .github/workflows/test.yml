@@ -17,15 +17,20 @@ permissions:
 
 jobs:
   pytest:
-    # Linux only: the repo's reference environment (see docs/DECISIONS.md,
-    # DECISION-004). Cloud-GPU and local-model tests are skipped by conftest.py.
-    runs-on: ubuntu-latest
+    # Linux is the reference environment, plus one Windows job because the
+    # author develops on Windows (docs/DECISIONS.md, DECISION-004/005).
+    # Cloud-GPU and local-model tests are skipped by conftest.py.
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
         # 3.10 is the documented minimum; 3.12 is the current target.
+        os: [ubuntu-latest]
         python-version: ["3.10", "3.12"]
+        include:
+          - os: windows-latest
+            python-version: "3.12"
 
     steps:
       - uses: actions/checkout@v4

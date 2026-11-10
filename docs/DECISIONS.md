@@ -31,6 +31,6 @@
 ## DECISION-005: Slim CI to ubuntu, Python 3.10 + 3.12
 
 **Context:** The inherited workflow ran ubuntu and macOS across Python 3.10-3.12 (6 jobs). The macOS runners existed for the upstream author's machine. The port targets the Claude Code subagent path, and we develop on Windows without WSL, so CI is the only Linux environment.
-**Decision:** One OS (ubuntu-latest), two Pythons (3.10 as the documented minimum, 3.12 as the target). Add concurrency cancel, read-only permissions, a 10-minute timeout and `workflow_dispatch`.
-**Alternatives considered:** Keep macOS (slower, scarcer runners, no one here uses it); a single Python version (misses 3.10 syntax breakage); add Windows (the removed failures were cloud/bash-only and are out of scope).
+**Decision:** ubuntu-latest with Python 3.10 (documented minimum) and 3.12 (target), plus one windows-latest job on 3.12 because the author develops on Windows. Add concurrency cancel, read-only permissions, a 10-minute timeout and `workflow_dispatch`.
+**Alternatives considered:** Keep macOS (slower, scarcer runners, no one here uses it); a single Python version (misses 3.10 syntax breakage); full Windows matrix (one Python is enough to catch OS-specific breakage).
 **Consequences:** macOS-only regressions would go unseen. No CD exists or is needed: this is a skill, not a deployed service.
