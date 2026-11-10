@@ -8,17 +8,24 @@ EPUB book translator (Claude Code skill). Entry point for the skill itself is `S
 This repo was forked from `fredchu/book-translator` but is now independent. Do not plan around upstream merges, rebases or PRs.
 
 ## Where things live
-- Plans: `docs/plans/` (each phase has a "done when" — treat it as the exit criteria)
+- Plan (design and rationale): `docs/plans/2026-11-11-vietnamese-language-profile.md`
+- Task ledger: `docs/LEDGER.md` — phase status plus links to per-phase detail. Read it first; open only the detail doc you need.
+- Phase detail: `docs/tasks/<NN-slug>/TASK.md` — Definition of Done, Test Plan, Program design, sub-tasks.
 - Decision log: `docs/DECISIONS.md` — deliberate tradeoffs a reasonable person might have chosen differently
 - Bug log: `docs/BUGS.md` — something already wrong in the product
-- Current work: Vietnamese port, `docs/plans/2026-11-11-vietnamese-language-profile.md`
+- Retro log: `docs/RETRO.md` — process lessons that generalize beyond one task. Skim before starting a new phase.
 
-## Way of working (Tier 1 — Light, plus bug log)
-- **Decision log:** add an entry when making a real tradeoff. Skip routine or trivially reversible choices.
-- **Bug log:** log a defect with symptom, root cause (or "unknown"), and reachability. Logging is not fixing — wait for an explicit decision before applying the fix. Exception: a live security hole or data-loss path gets flagged to the user immediately.
+## Way of working (Tier 2 — Standard)
+- **Task approval:** before implementing a phase, its `docs/tasks/<NN-slug>/TASK.md` must have a Definition of Done and Test Plan (with exact commands) that the user has approved. Fill the Program design section when the work touches several files or you will generate a substantial chunk of code. Tick sub-tasks as you go so an interrupted session can resume from the doc.
+- **Ledger:** update `docs/LEDGER.md` when a phase starts, blocks or finishes. A phase is `done` only when its DoD is fully checked and the Evidence cell links the PR or commit.
+- **Decision log:** add an entry for a real tradeoff. Skip routine or trivially reversible choices.
+- **Bug log:** log a defect with symptom, root cause (or "unknown"), and reachability. Logging is not fixing: wait for an explicit decision before applying the fix. Exception: a live security hole or data-loss path gets flagged to the user immediately.
+- **Retro log:** add an entry only if the lesson passes the generalization test (would it change how a different future task is approached?).
 - **No silent scope expansion:** an unrelated issue found mid-task goes in the bug log or a note to the user, not into the current diff.
 - **Proportionality:** overengineering is code or process that solves a problem the project doesn't have. Name the real, currently reachable reason before adding an abstraction, guard, or process step. "Just in case" is not a reason.
-- **Not installed on purpose:** task-approval gate (plan files already carry "done when"), retro log, ground-truth TDD (the existing `zh-tw` tests are the oracle; Phase 1 requires no test edits).
+- **Ground-truth TDD (Tier 3), scoped to named functions only.** The oracle is the current `zh-tw` behaviour of the pre-refactor code. For each function moved into the profile (label lookup, `_target_long`, the Han check, the audit predicates and thresholds): first run the original code and record its real output as a golden case, then write the test from that record, confirm it fails or is absent on the new path, then implement to green. If a test is later found wrong, re-derive it from the original code at the pre-refactor commit; never adjust it to match what the new code outputs. Do not apply this to the Vietnamese profile: no external oracle exists there, so use ordinary test-first development with labeled sample text (Phase 3).
+- **Oracle commit:** pre-refactor code is `main` at `bb0eb35`. Derive golden values with `git show bb0eb35:scripts/<file>` or a worktree, never from memory.
+- **Tests:** `pytest -q`. Cloud-GPU and local-model tests are skipped by `conftest.py` (DECISION-004). CI is the reference environment (ubuntu and Windows).
 
 ## Re-calibrate this setup when
 - A second contributor (human or separate AI session acting like one) joins.
