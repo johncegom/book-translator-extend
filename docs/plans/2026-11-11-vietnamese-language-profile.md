@@ -16,7 +16,7 @@
 ## Design decision: language profile, not in-place replacement
 
 - **Why not search-and-replace:** 41 of 52 test files contain Chinese text or zh names. An in-place port breaks them all and removes the safety net. A profile keeps the Chinese tests green and lets Vietnamese tests sit beside them.
-- **Why not a quick fork:** the upstream repo changes often (changelog > 900 lines). A thin profile layer is much easier to merge later.
+- **Upstream is not a factor:** this repo forked from upstream but is independent of it now, so merge-ability is not a reason. The profile is chosen for the test safety net, and it also keeps adding more languages cheap.
 - **How:** one new module holds everything language-dependent. Every other file asks the profile.
 
 ```python
@@ -92,4 +92,3 @@ Chinese is detected by script; Vietnamese shares Latin letters with English, so 
 
 - **Short paragraphs:** a line like "OK." has no Vietnamese-only letters. The 50-char threshold covers this, but dialogue-heavy books will have many such lines.
 - **Detector can be fooled:** an English paragraph with a French word like "café" does not match, because "é" alone is not Vietnamese-only. Test this case in Phase 3.
-- **Upstream drift:** rebase early and often, or offer Phase 1 upstream as a pull request.
