@@ -5,15 +5,27 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
+
+# Cancel a superseded run on the same branch/PR.
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   pytest:
-    runs-on: ${{ matrix.os }}
+    # Linux only: the repo's reference environment (see docs/DECISIONS.md,
+    # DECISION-004). Cloud-GPU and local-model tests are skipped by conftest.py.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
-        python-version: ["3.10", "3.11", "3.12"]
+        # 3.10 is the documented minimum; 3.12 is the current target.
+        python-version: ["3.10", "3.12"]
 
     steps:
       - uses: actions/checkout@v4
@@ -23,6 +35,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
+          cache-dependency-path: requirements*.txt
 
       - name: Install dependencies
         run: |
@@ -30,4 +43,4 @@ jobs:
           pip install -r requirements-dev.txt
 
       - name: Run pytest
-        run: pytest test/ -v
+        run: pytest test/ -q

@@ -27,3 +27,10 @@
 **Decision:** A root `conftest.py` skips the cloud-GPU and local-model (ollama/omlx) test files. The baseline is whatever `pytest -q` gives with those skipped (438 passed, 269 skipped on Windows). GitHub Actions (`.github/workflows/test.yml`, ubuntu + macOS) is the reference environment.
 **Alternatives considered:** Fix the 22 failures (out-of-scope code); mark them Windows-only skips (hides the real cause); run WSL locally (machine too weak).
 **Consequences:** Cloud and local paths are untested in this repo until the skip list is edited. They may rot, which is accepted. The skip list lives in `conftest.py`.
+
+## DECISION-005: Slim CI to ubuntu, Python 3.10 + 3.12
+
+**Context:** The inherited workflow ran ubuntu and macOS across Python 3.10-3.12 (6 jobs). The macOS runners existed for the upstream author's machine. The port targets the Claude Code subagent path, and we develop on Windows without WSL, so CI is the only Linux environment.
+**Decision:** One OS (ubuntu-latest), two Pythons (3.10 as the documented minimum, 3.12 as the target). Add concurrency cancel, read-only permissions, a 10-minute timeout and `workflow_dispatch`.
+**Alternatives considered:** Keep macOS (slower, scarcer runners, no one here uses it); a single Python version (misses 3.10 syntax breakage); add Windows (the removed failures were cloud/bash-only and are out of scope).
+**Consequences:** macOS-only regressions would go unseen. No CD exists or is needed: this is a skill, not a deployed service.
