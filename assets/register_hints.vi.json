@@ -1,0 +1,44 @@
+{
+  "registers": [
+    {
+      "id": "literary_fiction",
+      "description": "Literary fiction with plain spoken register and economy of words",
+      "register": "storyteller cadence",
+      "prefer": ["nhịp kể tự nhiên", "câu ngắn", "giọng hơi châm biếm"],
+      "avoid": ["dịch từng chữ", "văn phong quá trang trọng", "lạm dụng từ Hán Việt"],
+      "subagent_rules": [
+        "Short sentences over long ones. Plain storytelling prose with a natural spoken cadence.",
+        "Keep personal names and place names in their original spelling, exactly as the glossary gives them; do not transliterate them or invent Vietnamese equivalents.",
+        "Everyday Vietnamese (chạy/nhìn/nói, not tháo chạy/chiêm ngưỡng/ngôn rằng). Avoid piling up Sino-Vietnamese (Hán Việt) vocabulary.",
+        "Preserve the narrator's distance: do not insert author commentary or shift to the first person.",
+        "Dialogue should sound colloquial and natural; avoid archaic forms of address (ngài, tiểu đệ) unless the source English is itself period-archaic."
+      ]
+    },
+    {
+      "id": "non_fiction_narrative",
+      "description": "Business and social-science narrative that keeps the author's first person",
+      "register": "practical business memoir",
+      "prefer": ["nhịp kể tự nhiên", "ví dụ cụ thể", "giữ ngôi thứ nhất của tác giả", "giữ sự hài hước"],
+      "avoid": ["văn phong học thuật", "dịch từng chữ", "đổi “tôi” thành “tác giả”"],
+      "subagent_rules": [
+        "On a term's first appearance in a chapter, give the Vietnamese followed by the English in parentheses, for example “mô hình ngôn ngữ lớn (LLM)”; afterwards use the Vietnamese alone. Keep this consistent within a chapter.",
+        "Keep the author's first-person voice. “I asked…” becomes “Tôi hỏi…”; do not change it to “tác giả” or “chúng tôi”.",
+        "Keep the humour, irony and quoted examples of the original; dialogue should read as spoken Vietnamese, not stiff written prose.",
+        "Register: practical business/social-science narrative. Do not make it academic: short sentences, spoken rhythm, concrete examples over abstractions."
+      ]
+    },
+    {
+      "id": "academic_technical",
+      "description": "Academic or technical writing where precision outweighs readability",
+      "register": "scholarly precision",
+      "prefer": ["thuật ngữ chính xác", "từ nối logic", "câu đầy đủ"],
+      "avoid": ["khẩu ngữ", "đùa cợt", "sắc thái chủ quan"],
+      "subagent_rules": [
+        "Use precise technical terminology consistently. On the first occurrence of a key term, add the English in parentheses, for example “học máy (machine learning)”.",
+        "Translate logical connectives faithfully (do đó, tuy nhiên, ngoài ra, cần lưu ý rằng).",
+        "Use complete sentences. Avoid colloquial contractions and rhetorical flourishes.",
+        "Precision dominates readability: add no subjectivity, humour or hyperbole that the source does not contain."
+      ]
+    }
+  ]
+}
