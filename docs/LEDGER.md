@@ -10,7 +10,7 @@ Plan and rationale: `docs/plans/2026-11-11-vietnamese-language-profile.md`. This
 | 1 | Profile with zh-tw only | done 2026-11-11 (PR #4 still draft and unmerged) | PR #4; CI run 42961118515 green on ubuntu 3.10/3.12 and windows 3.12, 472 passed / 269 skipped | `docs/tasks/01-profile-zh-tw/TASK.md` |
 | 2 | Vietnamese profile | done 2026-11-11 | PR #6 merged (`71dc493`); 547 passed / 269 skipped | `docs/tasks/02-profile-vi/TASK.md` |
 | 3 | Detector and audits | done 2026-11-11 (PR #7 open, unmerged) | PR #7; CI run 43033595597 green on ubuntu 3.10/3.12 and windows 3.12, 634 passed / 269 skipped | `docs/tasks/03-detector-audits/TASK.md` |
-| 4 | Skill file | not started | | detail doc to be drafted (carries BUG-001 decision, BUG-002, BUG-003) |
+| 4 | Skill file | blocked on user approval of DoD (draft written) | | `docs/tasks/04-skill-file/TASK.md` |
 | 5 | One full book | not started | | created when Phase 4 is done |
 
 Status values: not started / in progress / blocked / done. A phase is `done` only when its detail doc's Definition of Done is fully checked, and the Evidence cell links the PR or commit.
