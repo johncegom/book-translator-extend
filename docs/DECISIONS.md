@@ -82,5 +82,11 @@
 **Context:** The zh-tw values (0.22, 0.22, 0.30) are tuned for Chinese, which is much shorter than English. Measured vi/en character ratios: Alice excerpt 0.80-0.94 (n=8), a non-fiction book 0.91-1.16 (n=8), one translator, hand-written. No data for academic text. Advise (Fable, one-time user override) recommended a flat value.
 **Decision:** `min_length_ratio: 0.6` in each of the three registers in `assets/register_hints.vi.json`. 0.60 is 0.75 of the measured minimum. The amber margins (0.04 and 0.02) are left as they are. Recalibrate from the first real machine-translated book (Phase 5).
 **Alternatives considered:** 0.55/0.55/0.60 (my leaning; a separate academic value has no data behind it); a higher value (a length ratio only catches gross truncation, and one dropped sentence in four lands near 0.75, inside the legitimate range).
-**Consequences:** Does not catch a paragraph that lost under 40% of its content, nor one padded to full length. Unmatched registers still get 0.22 (BUG-002). Values are provisional.
+**Consequences:** Does not catch a paragraph that lost under 40% of its content, nor one padded to full length. Unmatched registers got 0.22 until Phase 4 (BUG-002); now `default_min_length_ratio` 0.60 in the same file, with a test that keeps it equal to the register values. Values are provisional.
 
+## DECISION-013: BUG-001 is fixed by splitting at NCX/nav targets inside `extract_epub.py`
+
+**Context:** Several chapters packed into one spine file extract as one huge item (*Subtract*: 125k-198k characters). The user (2026-11-12) asked for the option with better performance, between (a) split in the extractor and (b) a separate pre-split script.
+**Decision:** Option (a): `extract_epub.py` splits a spine file at the fragment targets that the NCX/nav lists for it. A spine file with no fragment targets stays one item, as today. Lands in its own PR before Phase 5, tested on a synthetic EPUB (the *Subtract* file is copyrighted and never committed).
+**Alternatives considered:** (b) a pre-split script: rewrites a whole EPUB and then extracts it a second time; (c) documenting the limit: leaves Phase 5 without its book.
+**Consequences:** Item names and counts change for EPUBs that have anchors, so existing frozen fixtures must be checked (Alice must stay at 14 items). `pdftohtml`-style mid-sentence paragraph splits are not addressed by this.
