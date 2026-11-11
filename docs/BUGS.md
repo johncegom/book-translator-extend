@@ -36,6 +36,14 @@ Candidates from the Vietnamese plan, to log only if they actually occur: short-p
 **Options:** pass the override into the audit, or leave it.
 **Status:** no fix scheduled (agreed 2026-11-11). Revisit only if a real run uses `register_override`.
 
+## BUG-005: The coverage audit's failure text says "adjacent zh" for every language
+
+**Symptom:** For a `vi` book, `bilingual_coverage_audit` reports `missing adjacent zh after: ...` (found in the Phase 4 dry run). The module docstring and the success line ("adjacent Han translations") are also zh-only.
+**Root cause:** The message strings in `scripts/bilingual_coverage_audit.py` (lines 1, 75, 201) were never made profile-aware; the logic is. Wording only; the verdict is correct.
+**Reachability:** Every failing or passing `vi` run; misleading to a reader, no wrong result.
+**Options:** (a) use the profile's `long_name` or code in the messages, keeping the zh-tw text byte-identical; (b) leave as is.
+**Status:** logged 2026-11-12, no fix scheduled; needs a decision (the zh-tw wording is pinned by existing tests, so a change must keep it byte-identical).
+
 <!--
 ## BUG-001: <short symptom>
 

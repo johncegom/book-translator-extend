@@ -52,8 +52,8 @@ C. **BUG-001**: decision first, then (if a fix is chosen) the fix before Phase 5
 - [x] 4.1 User approved the DoD and Test Plan 2026-11-12 (with the open-question answers)
 - [x] 4.2 BUG-001 decision written (DECISIONS.md) and BUGS.md updated (DECISION-013)
 - [x] 4.3 Red tests for BUG-002 and BUG-003; Advise call for the default ratio; fixes (done 2026-11-12: Advise opus logged; tests in test/test_phase4_bugs.py; carve-outs: test_lang_profile_vi.py and, from Phase 3, test_vi_length_ratio_phase3.py, the latter not an existing-test edit since it is newer than the gate commit)
-- [ ] 4.4 `SKILL.md` edits (A) and the structural test
-- [ ] 4.5 Dry run on the Alice excerpt; record results
+- [x] 4.4 `SKILL.md` edits (A) and the structural test (SKILL.md edited, version 1.4.0; test/test_skill_md_phase4.py, 5 assertions)
+- [x] 4.5 Dry run on the Alice excerpt; record results (docs/tasks/04-skill-file/dry_run.py; results below)
 - [ ] 4.6 BUG-001 fix if chosen (own PR or sub-task); verify DoD; ledger
 
 ## Answers (user, 2026-11-12)
@@ -71,3 +71,16 @@ DoD change from the answers: the fresh-session item is not part of Phase 4; the 
 2. **Languages the skill advertises.** Only `zh-tw` and `vi`, or also mention that `zh-cn`, `en`, `ja`, `ko` fall back to the generic prompt without being supported end to end? I lean to advertise only the two that are tested.
 3. **"Fresh session" check.** The plan's done-when is a fresh Claude Code session running the skill with `vi`. I propose the scripted dry run for Phase 4 and moving the fresh-session run into Phase 5, where a full book is translated anyway. Agree?
 4. **Quota gate.** Make it optional (as drafted) or remove it from the skill? I lean optional, since removal drops a feature of the upstream workflow; but this repo is independent now, so removal is defensible.
+
+## Results
+
+### 4.4 SKILL.md edits
+Version 1.3.0 to 1.4.0; frontmatter description and Triggers gain Vietnamese and English phrases; new "Supported languages" table (zh-tw, vi); the quota gate is conditional on `command -v agent-orch` and the personal path is gone; Step 1 asks the language with `AskUserQuestion` and writes it with `state.init_state(.., target_lang)` + `state.save`; Step 6 passes `target_lang=state["target_lang"]` to `build_subagent_prompt`; the Cloud mode, Offline mode and `build_terms.py` sections are marked zh-tw only with a skip instruction for `vi`. No Han text was added.
+
+Correction to the draft finding 2: `state.init_state(book_path, spine, target_lang)` does write `target_lang`, but only the ollama driver calls it; the Anthropic flow in SKILL.md never said to, so the gap was in the prose, not in the scripts.
+
+### 4.5 Dry run (`python docs/tasks/04-skill-file/dry_run.py`, copy of `runs/alice/frozen_vi`, state.json removed first)
+- `state.json` written with `target_lang = vi`.
+- Prompt built from `state["target_lang"]`: 3788 chars, Vietnamese rules present, 0 Han characters.
+- `assemble.py` rc 0. `audit_suite.py`: structural PASS, translation_quality PASS, href_resolve PASS, bilingual_coverage FAIL only in the 10 files of chapters that have no translation (the fixture has 3 translated chapters); 0 failures inside translated chapters.
+- Side finding: BUG-005 (coverage failure text says "adjacent zh" for vi).
