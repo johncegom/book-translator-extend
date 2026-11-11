@@ -82,7 +82,7 @@
 **Context:** The zh-tw values (0.22, 0.22, 0.30) are tuned for Chinese, which is much shorter than English. Measured vi/en character ratios: Alice excerpt 0.80-0.94 (n=8), a non-fiction book 0.91-1.16 (n=8), one translator, hand-written. No data for academic text. Advise (Fable, one-time user override) recommended a flat value.
 **Decision:** `min_length_ratio: 0.6` in each of the three registers in `assets/register_hints.vi.json`. 0.60 is 0.75 of the measured minimum. The amber margins (0.04 and 0.02) are left as they are. Recalibrate from the first real machine-translated book (Phase 5).
 **Alternatives considered:** 0.55/0.55/0.60 (my leaning; a separate academic value has no data behind it); a higher value (a length ratio only catches gross truncation, and one dropped sentence in four lands near 0.75, inside the legitimate range).
-**Consequences:** Does not catch a paragraph that lost under 40% of its content, nor one padded to full length. Unmatched registers still get 0.22 (BUG-002). Values are provisional.
+**Consequences:** Does not catch a paragraph that lost under 40% of its content, nor one padded to full length. Unmatched registers got 0.22 until Phase 4 (BUG-002); now `default_min_length_ratio` 0.60 in the same file, with a test that keeps it equal to the register values. Values are provisional.
 
 ## DECISION-013: BUG-001 is fixed by splitting at NCX/nav targets inside `extract_epub.py`
 

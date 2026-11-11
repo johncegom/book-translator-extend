@@ -51,7 +51,7 @@ C. **BUG-001**: decision first, then (if a fix is chosen) the fix before Phase 5
 
 - [x] 4.1 User approved the DoD and Test Plan 2026-11-12 (with the open-question answers)
 - [x] 4.2 BUG-001 decision written (DECISIONS.md) and BUGS.md updated (DECISION-013)
-- [ ] 4.3 Red tests for BUG-002 and BUG-003; Advise call for the default ratio; fixes
+- [x] 4.3 Red tests for BUG-002 and BUG-003; Advise call for the default ratio; fixes (done 2026-11-12: Advise opus logged; tests in test/test_phase4_bugs.py; carve-outs: test_lang_profile_vi.py and, from Phase 3, test_vi_length_ratio_phase3.py, the latter not an existing-test edit since it is newer than the gate commit)
 - [ ] 4.4 `SKILL.md` edits (A) and the structural test
 - [ ] 4.5 Dry run on the Alice excerpt; record results
 - [ ] 4.6 BUG-001 fix if chosen (own PR or sub-task); verify DoD; ledger

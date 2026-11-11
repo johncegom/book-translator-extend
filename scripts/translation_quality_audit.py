@@ -15,7 +15,7 @@ try:
     from scripts.audit_result import AuditResult
     from scripts.dispatch import contains_model_token_leak
     from scripts.epub_reader import EPUBReader
-    from scripts.glossary import resolve_register
+    from scripts.glossary import default_min_length_ratio, resolve_register
     from scripts.lang_profile import ZH_TW
     from scripts.offline_postprocess import ambiguous_simplified_fixes
     from scripts.paragraph_classification import reasoned_source_only_entries
@@ -23,7 +23,7 @@ except ModuleNotFoundError:  # pragma: no cover - direct script execution path
     from audit_result import AuditResult
     from dispatch import contains_model_token_leak
     from epub_reader import EPUBReader
-    from glossary import resolve_register
+    from glossary import default_min_length_ratio, resolve_register
     from lang_profile import ZH_TW
     from offline_postprocess import ambiguous_simplified_fixes
     from paragraph_classification import reasoned_source_only_entries
@@ -320,7 +320,7 @@ def _offending_simplified_chinese_chars(text: str) -> str:
 
 
 def _min_length_ratio_from_book_dir(book_dir: Path | None, profile=None) -> float:
-    default = 0.22
+    default = default_min_length_ratio(profile)
     if book_dir is None:
         return default
     glossary_path = book_dir / "glossary.json"
@@ -344,9 +344,18 @@ def main(argv: list[str] | None = None) -> int:
     if not args.output.is_file():
         print(f"not a file: {args.output}", file=sys.stderr)
         return 2
-    min_length_ratio = _min_length_ratio_from_book_dir(args.book_dir)
+    profile = None
+    if args.book_dir is not None:
+        # Same rule as audit_suite: state.json target_lang picks the profile (BUG-003).
+        # Imported here because audit_suite imports this module.
+        try:
+            from scripts.audit_suite import _profile_for_book
+        except ModuleNotFoundError:  # pragma: no cover - direct script execution path
+            from audit_suite import _profile_for_book  # type: ignore
+        profile = _profile_for_book(args.book_dir)
+    min_length_ratio = _min_length_ratio_from_book_dir(args.book_dir, profile=profile)
     passed, failures, warnings = audit_with_warnings(
-        args.output, min_length_ratio=min_length_ratio
+        args.output, min_length_ratio=min_length_ratio, profile=profile
     )
     verdict = "FAIL" if not passed else "WARN" if warnings else "PASS"
     print(f"translation_quality_audit: {verdict}")

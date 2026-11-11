@@ -33,6 +33,22 @@ def _hints_path(profile=None) -> Path:
     return REGISTER_HINTS_PATH.parent / profile.register_hints_file
 
 
+def default_min_length_ratio(profile=None, fallback: float = 0.22) -> float:
+    """Profile's `default_min_length_ratio` from its hints file, else `fallback`.
+
+    Used when no register resolves (BUG-002). A missing file, a missing key or a value
+    that is not a number strictly between 0 and 1 gives `fallback`.
+    """
+    path = _hints_path(profile)
+    if not path.exists():
+        return fallback
+    with path.open(encoding="utf-8") as fh:
+        value = json.load(fh).get("default_min_length_ratio")
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or not 0 < value < 1:
+        return fallback
+    return float(value)
+
+
 def _load_register_hints(profile=None) -> list[dict]:
     path = _hints_path(profile)
     if not path.exists():
