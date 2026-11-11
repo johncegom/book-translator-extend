@@ -1,6 +1,6 @@
 # Task: Phase 2 — Vietnamese profile (`vi`)
 
-Status: in progress (2.1, 2.2, 2.3 done; 2.4 next). DoD approved 2026-11-11 and amended the same day after the Advise call (user-approved).
+Status: in progress (2.1-2.4 done; 2.5 next). DoD approved 2026-11-11 and amended the same day after the Advise call (user-approved).
 
 Depends on: Phase 1 (merged, PR #4). Plan: `docs/plans/2026-11-11-vietnamese-language-profile.md`. Decisions to honour: DECISION-002 (keep the `chapter_titles_zh` key), DECISION-006 (tighten `resolve_profile`), DECISION-007 (profile shape).
 
@@ -99,9 +99,10 @@ Regression and process
 - [x] 2.1 User answers the open questions and reviews the Vietnamese wording; DoD approved (2026-11-11)
 - [x] 2.2 Advise call done (Fable, one-time override, logged 2026-11-11, `4b176ca`); amendments approved by the user and applied above
 - [x] 2.3 New golden pins in new files, derived from a worktree of `e0f41b6` (its `scripts/`, `assets/`, `test/` equal `dac59fe` and `bb0eb35` for the pinned files): `GLOSSARY_PROMPT` text and sha plus one `.format` rendering; `_REGISTER_HINTS_BLOCK` and `_load_register_hints()`; `resolve_register`, `resolve_register_override`, `resolve_register_rules` over substring, token-match, unknown, bad `style_anchor`, explicit-hints and id-case samples; `build_subagent_prompt` with each matched register, with `register_override` and with `custom_instructions`; `GENERIC_SUBAGENT_RULES`; `_min_length_ratio_from_book_dir` for the academic register (0.30); the failure strings of `translation_quality_audit.audit()` on a tiny EPUB with a Simplified target. Done: `test/golden/derive_phase2.py`, `golden_zh_tw_phase2.json`, `test_zh_tw_phase2_characterization.py` (9 groups, 11 tests). Verified in the `e0f41b6` worktree (22 golden tests pass there) and on this branch; mutation checks (dispatch generic rule text, glossary prompt wording, academic ratio 0.3 to 0.31) fail 5 groups. Suite: 483 passed, 269 skipped (472 + 11). Keep `../bt-oracle2` until Phase 2 is done.
-- [ ] 2.4 Red tests: `test_lang_profile_vi.py`, then the Vietnamese frozen fixture and its snapshot
+- [x] 2.4 Red tests: `test/test_lang_profile_vi.py` (64 tests; 43 fail, 21 pass vacuously or by unchanged behaviour) committed first (`9d10cb6`) with the three named carve-outs in `test/test_lang_profile.py`; Vietnamese frozen fixture files in `docs/tasks/02-profile-vi/frozen-fixture/` (hand-written Vietnamese for the same Alice excerpt, `state.json` with `target_lang: vi`, `build.py`, `snapshot.py`; paragraph counts verified 11/6/5 against the source). The fixture's baseline snapshot is recorded after 2.5, when `vi` assembles, and then guards Phases 3-5.
 - [ ] 2.5 Add fields and the `vi` profile; refactor the glossary and dispatch pieces; register hints for `vi`
 - [ ] 2.6 Guard the Simplified gate and strict unknown-code handling; DECISION entry
 - [ ] 2.7 Verify the DoD; update the ledger
 
-## Notes / deviations
+## Notes / deviations
+- 2.4 note: the vi detector counts ă đ ơ ư ĩ ũ and U+1EA0-1EF9 only. Letters shared with French/Portuguese (à á â ã è é ê ì í ò ó ô õ ù ú) do not count, so a short phrase such as "Xin chào" is a known false negative; the 50-character rule and mixed-text threshold belong to Phase 3 and are deliberately not pinned here. Writing the assertions also caught a draft error: tone-marked vowels like à/á/ã are Latin-1, so "any tone-marked vowel" would have counted French accents.
