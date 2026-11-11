@@ -13,20 +13,18 @@ from bs4 import BeautifulSoup
 
 try:  # pragma: no cover - import style depends on caller
     from .bilingual_rewriter import (
-        CONTENTS_LINK_LABELS_ZH_TW,
-        STRUCTURAL_LABELS_ZH_TW,
         _exact_translation_for_text,
         _fallback_translation,
     )
+    from .lang_profile import ZH_TW
     from . import translations_extra as translations_extra_module
     from .manifest import entry_original_path
 except ImportError:  # pragma: no cover
     from bilingual_rewriter import (  # type: ignore
-        CONTENTS_LINK_LABELS_ZH_TW,
-        STRUCTURAL_LABELS_ZH_TW,
         _exact_translation_for_text,
         _fallback_translation,
     )
+    from lang_profile import ZH_TW  # type: ignore
     import translations_extra as translations_extra_module  # type: ignore
     from manifest import entry_original_path  # type: ignore
 
@@ -53,8 +51,9 @@ def nav_path(manifest: dict, opf_path: str | None) -> str | None:
     return f"{opf_dir}/nav.xhtml" if opf_dir else "nav.xhtml"
 
 
-def build_nav_xhtml(manifest: dict, entries: list[dict], nav_path: str, opf_dir: str) -> str:
+def build_nav_xhtml(manifest: dict, entries: list[dict], nav_path: str, opf_dir: str, profile=None) -> str:
     """Generate the bilingual nav.xhtml content for the assembled EPUB."""
+    profile = ZH_TW if profile is None else profile
     title = html.escape(str(manifest.get("title") or manifest.get("book_stem") or "Book"))
     nav_entries = [
         entry for entry in entries
@@ -72,17 +71,17 @@ def build_nav_xhtml(manifest: dict, entries: list[dict], nav_path: str, opf_dir:
             nested_ids.add(str(entry.get("id")))
     top_level = [entry for entry in nav_entries if str(entry.get("id")) not in nested_ids]
     body = "\n".join(
-        _render_nav_item(entry, children_by_parent.get(str(entry.get("id")), []), nav_path, opf_dir)
+        _render_nav_item(entry, children_by_parent.get(str(entry.get("id")), []), nav_path, opf_dir, profile)
         for entry in top_level
     )
     return f"""<?xml version="1.0" encoding="utf-8"?>
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="zh-Hant" xml:lang="zh-Hant">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="{profile.html_lang}" xml:lang="{profile.html_lang}">
   <head>
-    <title>{title} ｜ 中英對照</title>
+    <title>{title} ｜ {profile.bilingual_edition_label}</title>
   </head>
   <body>
     <nav epub:type="toc" id="toc" role="doc-toc">
-      <h1>Contents ｜ 目錄</h1>
+      <h1>Contents ｜ {profile.contents_labels['Contents']}</h1>
       <ol>
 {body}
       </ol>
@@ -92,12 +91,12 @@ def build_nav_xhtml(manifest: dict, entries: list[dict], nav_path: str, opf_dir:
 """
 
 
-def missing_nav_zh_warnings(entries: list[dict]) -> list[str]:
+def missing_nav_zh_warnings(entries: list[dict], profile=None) -> list[str]:
     missing: list[dict] = []
     for entry in entries:
         if entry.get("output_strategy") in {"drop_explicit", "nav_generated"} or entry.get("role") == "nav":
             continue
-        _nav_display_label(entry, missing)
+        _nav_display_label(entry, missing, profile)
     warnings = []
     for entry in missing:
         key = str(entry.get("original_idref") or entry.get("src_idref") or entry.get("id") or "")
@@ -118,7 +117,7 @@ def source_ncx_path(source_epub: Path) -> str | None:
         return None
 
 
-def patch_toc_ncx(ncx_xml: str, entries: list[dict]) -> str:
+def patch_toc_ncx(ncx_xml: str, entries: list[dict], profile=None) -> str:
     entry_by_filename = _nav_entry_by_filename(entries)
     if not entry_by_filename:
         return ncx_xml
@@ -158,18 +157,18 @@ def patch_toc_ncx(ncx_xml: str, entries: list[dict]) -> str:
             if text_node is None:
                 text_node = soup.new_tag("text")
                 nav_label.append(text_node)
-            text_node.string = _nav_display_label(entry)
+            text_node.string = _nav_display_label(entry, None, profile)
     return str(soup)
 
 
-def _render_nav_item(entry: dict, children: list[dict], nav_path: str, opf_dir: str) -> str:
-    label = _nav_display_label(entry)
+def _render_nav_item(entry: dict, children: list[dict], nav_path: str, opf_dir: str, profile=None) -> str:
+    label = _nav_display_label(entry, None, profile)
     target = _entry_original_path(entry, f"{opf_dir}/content.opf" if opf_dir else None)
     href = posixpath.relpath(target, posixpath.dirname(nav_path) or ".")
     anchor = f'<a href="{html.escape(quote(href, safe="/#._-"))}">{html.escape(label)}</a>'
     if not children:
         return f"        <li>{anchor}</li>"
-    child_items = "\n".join(_render_nav_item(child, [], nav_path, opf_dir) for child in children)
+    child_items = "\n".join(_render_nav_item(child, [], nav_path, opf_dir, profile) for child in children)
     return f"""        <li>{anchor}
           <ol>
 {child_items}
@@ -177,11 +176,11 @@ def _render_nav_item(entry: dict, children: list[dict], nav_path: str, opf_dir: 
         </li>"""
 
 
-def _nav_display_label(entry: dict, missing_zh_collector: list[dict] | None = None) -> str:
+def _nav_display_label(entry: dict, missing_zh_collector: list[dict] | None = None, profile=None) -> str:
     first = _clean_text(str(entry.get("first_heading") or entry.get("id") or ""))
     if not first:
         first = "Untitled"
-    zh = _nav_zh_label(first, entry)
+    zh = _nav_zh_label(first, entry, profile)
     if zh and zh != first:
         return f"{first} ｜ {zh}"
     if missing_zh_collector is not None and entry.get("output_strategy") in {"translate", "source_only", "nav"}:
@@ -199,36 +198,33 @@ _FOOTNOTE_HEADING_RE = re.compile(r"^Footnote\s+(\d+)$")
 # "Praise for <Title>" and then quote a blurb, giving a first_heading dozens of
 # words long that no exact-match table can catch. Label only — output_strategy is
 # untouched, so these pages keep being translated.
-_PREFIX_LABELS_ZH_TW = (
-    ("praise for ", "各界讚譽"),
-    ("advance praise for ", "各界讚譽"),
-    ("also by ", "作者其他著作"),
-)
+_PREFIX_LABELS_ZH_TW = ZH_TW.prefix_labels  # alias of the zh-tw profile data
 
 
-def _nav_zh_label(first: str, entry: dict) -> str:
+def _nav_zh_label(first: str, entry: dict, profile=None) -> str:
+    profile = ZH_TW if profile is None else profile
     override = _translations_extra_nav_overrides(entry).get(str(entry.get("original_idref") or ""))
     if override:
         return str(override)
     footnote = _FOOTNOTE_HEADING_RE.match(first.strip())
     if footnote:
-        return f"註腳 {int(footnote.group(1))}"
+        return profile.footnote_label.format(n=int(footnote.group(1)))
     lowered = first.strip().lower()
-    for prefix, label in _PREFIX_LABELS_ZH_TW:
+    for prefix, label in profile.prefix_labels:
         if lowered.startswith(prefix):
             return label
-    exact = STRUCTURAL_LABELS_ZH_TW.get(first)
+    exact = profile.structural_labels.get(first)
     if exact:
         return exact
-    contents = CONTENTS_LINK_LABELS_ZH_TW.get(first)
+    contents = profile.contents_labels.get(first)
     if contents:
         return contents
     contents_style = _contents_style(first)
     if contents_style != first:
-        exact = STRUCTURAL_LABELS_ZH_TW.get(contents_style) or CONTENTS_LINK_LABELS_ZH_TW.get(contents_style)
+        exact = profile.structural_labels.get(contents_style) or profile.contents_labels.get(contents_style)
         if exact:
             return exact
-    return _exact_translation_for_text(contents_style, entry) or _fallback_translation(first, entry)
+    return _exact_translation_for_text(contents_style, entry, profile) or _fallback_translation(first, entry, profile)
 
 
 def _translations_extra_nav_overrides(entry: dict) -> dict:
@@ -256,14 +252,14 @@ def _nav_entry_by_filename(entries: list[dict]) -> dict[str, dict]:
     return mapping
 
 
-def _nav_label(entry: dict) -> str:
+def _nav_label(entry: dict, profile=None) -> str:
     first = _clean_text(str(entry.get("first_heading") or entry.get("id") or ""))
     zh = (
-        _exact_translation_for_text(first, entry)
-        or _exact_translation_for_text(_contents_style(first), entry)
+        _exact_translation_for_text(first, entry, profile)
+        or _exact_translation_for_text(_contents_style(first), entry, profile)
     )
     if not zh:
-        zh = _fallback_translation(first, entry) if first else "未命名"
+        zh = _fallback_translation(first, entry, profile) if first else "未命名"
     if first and first != zh and len(first) < 80:
         return f"{first} / {zh}"
     return zh
