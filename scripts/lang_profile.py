@@ -55,12 +55,13 @@ _ZH_TW_PROMPT_RULES = 'Traditional Chinese rule: If the target is 台灣繁體�
 
 _ZH_TW_DEFAULT_CUSTOM_INSTRUCTIONS = 'If the target is 台灣繁體中文, use 台灣用語 (e.g. 「軟體」not「软件」, 「網路」not「网络」). Avoid 翻譯腔. Prefer short sentences over four-character literary clichés.'
 
-_HAN_RE = re.compile(r"[\u4e00-\u9fff]")
+# The zh-tw "is this already target-language text" detector (U+4E00-U+9FFF).
+HAN_RE = re.compile(r"[\u4e00-\u9fff]")
 
 
 def _zh_tw_is_target_text(text: str) -> bool:
     """True when text contains any CJK Han character (U+4E00-U+9FFF)."""
-    return bool(_HAN_RE.search(text))
+    return bool(HAN_RE.search(text))
 
 
 @dataclass(frozen=True)
