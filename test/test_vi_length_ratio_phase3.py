@@ -48,10 +48,10 @@ def test_book_dir_lookup_returns_the_vi_ratio_for_each_registered_phrase(tmp_pat
     assert translation_quality_audit._min_length_ratio_from_book_dir(tmp_path, profile=VI) == 0.60
 
 
-def test_the_fallback_for_an_unmatched_register_is_unchanged(tmp_path):
-    # BUG-002 (docs/BUGS.md) is logged, not fixed: the pinned Phase 2 test keeps this at 0.22.
+def test_the_fallback_for_an_unmatched_register_is_the_vi_default(tmp_path):
+    # BUG-002 fixed in Phase 4 (was pinned at 0.22 here).
     (tmp_path / "glossary.json").write_text(json.dumps({"style_anchor": {"register": "zzz unknown"}}), encoding="utf-8")
-    assert translation_quality_audit._min_length_ratio_from_book_dir(tmp_path, profile=VI) == 0.22
+    assert translation_quality_audit._min_length_ratio_from_book_dir(tmp_path, profile=VI) == 0.60
 
 
 def test_truncated_vi_paragraph_fails_and_a_full_one_passes(tmp_path):

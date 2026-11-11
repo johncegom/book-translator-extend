@@ -333,9 +333,10 @@ def test_banned_patterns_still_apply_to_vi(tmp_path):
     assert ok is False and any("banned pattern" in f for f in failures)
 
 
-def test_min_length_ratio_for_vi_falls_back_to_the_default(tmp_path):
+def test_min_length_ratio_for_vi_falls_back_to_the_vi_default(tmp_path):
     (tmp_path / "glossary.json").write_text(json.dumps({"style_anchor": {"register": "zzz unknown"}}), encoding="utf-8")
-    assert translation_quality_audit._min_length_ratio_from_book_dir(tmp_path, profile=VI) == 0.22
+    # BUG-002 (Phase 4): an unmatched register under vi now gets the vi default; zh-tw keeps 0.22.
+    assert translation_quality_audit._min_length_ratio_from_book_dir(tmp_path, profile=VI) == 0.60
     assert translation_quality_audit._min_length_ratio_from_book_dir(tmp_path) == 0.22
 
 

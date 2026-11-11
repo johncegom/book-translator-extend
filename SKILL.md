@@ -1,8 +1,8 @@
 ---
 name: book-translator
-version: 1.3.0
+version: 1.4.0
 description: |-
-  Translate full-length books (EPUB) to Traditional Chinese (Taiwan) with literary tone fidelity and cross-chapter coherence, preserving EPUB structure. Use when the user says "翻書", "翻電子書", "翻譯整本書", "book translate", "bilingual epub", or gives an .epub expecting literary translation. Main session extracts an OPF spine manifest plus a per-book glossary and style anchor, then dispatches parallel subagents (each gets glossary, style anchor, and last-paragraph carryover for coherence); the first item is previewed for tone confirmation before fanning out the rest. Produces a bilingual .epub (source + translation interleaved) with manifest/glossary/state for resume. Differs from translate-book (generic PDF/DOCX/EPUB, single-language, no coherence): book-translator targets literary works, uses Opus for the style-anchor pass and Sonnet for the parallel fan-out, and gates quality before shipping. Not for short articles (use polish) or SRT subtitles (use srt).
+  Translate full-length books (EPUB) to Traditional Chinese (Taiwan) or Vietnamese with literary tone fidelity and cross-chapter coherence, preserving EPUB structure. Use when the user says "翻書", "翻電子書", "翻譯整本書", "dịch sách", "dịch ebook sang tiếng Việt", "translate this book to Vietnamese", "book translate", "bilingual epub", or gives an .epub expecting literary translation. Main session extracts an OPF spine manifest plus a per-book glossary and style anchor, then dispatches parallel subagents (each gets glossary, style anchor, and last-paragraph carryover for coherence); the first item is previewed for tone confirmation before fanning out the rest. Produces a bilingual .epub (source + translation interleaved) with manifest/glossary/state for resume. Differs from translate-book (generic PDF/DOCX/EPUB, single-language, no coherence): book-translator targets literary works, uses Opus for the style-anchor pass and Sonnet for the parallel fan-out, and gates quality before shipping. Not for short articles (use polish) or SRT subtitles (use srt).
 allowed-tools:
   - Read
   - Write
@@ -25,6 +25,8 @@ Real user phrases that should route here:
 - 「翻書」「翻電子書」「翻譯整本書」「文學翻譯」
 - 「bilingual epub」「book translate」「translate this novel」
 - 「把 XXX.epub 翻成繁中」「跑書」
+- 「dịch sách」「dịch ebook sang tiếng Việt」「dịch cuốn này sang tiếng Việt」
+- "translate this book to Vietnamese", "bilingual epub English-Vietnamese"
 - 用戶直接給一個 `.epub` 路徑並暗示需要文學翻譯
 
 **Not for:**
@@ -46,6 +48,20 @@ Real user phrases that should route here:
 | Resume | None | `state.json` |
 | Domain | Generic | Literary (tone-critical) |
 
+## Supported languages
+
+`target_lang` is chosen per book (Step 1) and stored in `state.json`.
+
+| `target_lang` | Language | Engines |
+|---------------|----------|---------|
+| `zh-tw` (default) | Traditional Chinese (Taiwan) | Anthropic subagents, omlx, ollama, cloud GPU |
+| `vi` | Vietnamese | **Anthropic subagent path only** |
+
+For `vi`, **skip** everything that is zh-tw only: the offline engines (omlx, ollama, cloud GPU),
+`scripts/offline_postprocess.py` (OpenCC) and `scripts/build_terms.py` (OpenCC/Simplified check).
+The glossary JSON key stays `chapter_titles_zh` for every language; for `vi` its values are Vietnamese
+(for example `"CHAPTER 1": "Chương 1"`).
+
 ## Translation provider (engine)
 
 The skill supports two providers:
@@ -54,9 +70,10 @@ The skill supports two providers:
   (Opus 4.7 anchor + Sonnet 4.6 fan-out), parallel `concurrency=5`. Best
   quality; spends CC subscription quota. Triggered by the main workflow
   (see "Workflow" section below).
-- Anthropic provider automatically uses the shared quota gate before Opus/Sonnet
-  fan-out. The user does not need to say `agent-orch`:
-  `/Users/fredchu/bin/agent-orch quota check --provider claude --threshold 85 --on-error fail-open --json`.
+- Optional quota gate: **only if an `agent-orch` command exists on this machine**
+  (check with `command -v agent-orch`; skip this whole bullet when it does not), run it
+  before Opus/Sonnet fan-out:
+  `agent-orch quota check --provider claude --threshold 85 --on-error fail-open --json`.
   If the command returns exit 2 or `decision=="wait"`, call `ScheduleWakeup`
   for JSON `resume_at`, persist the current `{book}_state.json`, and resume
   from completed chapter outputs after waking. If `decision=="probe_failed"`,
@@ -203,6 +220,8 @@ The skill supports two providers:
 
 ### Cloud mode — triggers + workflow
 
+> **zh-tw only.** Not available for `vi`; skip this section.
+
 Triggers: 「用 vast 翻 X.epub」「上雲翻」「用 runpod 翻書」「cloud translate」→
 （「用 colab 翻」「Colab A100 翻書」→ `--provider colab`，見下方 Colab 小節）
 
@@ -256,6 +275,8 @@ scripts/cloud_llm.sh --stop runs/cloud-llm-<id>                     # 砍掉 --k
   固定開銷約 0.12 美元；之後翻譯 5 章結構測試檔 0.3 分鐘。RunPod 路徑只有替身測試，還沒真機跑過。
 
 ### Offline mode — triggers + workflow
+
+> **zh-tw only.** omlx, ollama and `offline_postprocess.py` are not available for `vi`; skip this section.
 
 Triggers (main session routes here when the user says):
 
@@ -591,7 +612,13 @@ quality preference for that batch.
 ### Step 1: Collect parameters
 
 - `book_path` — required, must be `.epub`
-- `target_lang` — default `zh-tw` (台灣繁體中文; use 台灣用語 not 大陸用語)
+- `target_lang` — **ask the user** with `AskUserQuestion` (options: `zh-tw` Traditional Chinese
+  (Taiwan), `vi` Vietnamese; see "Supported languages"). If the user already named the language
+  (for example "dịch sang tiếng Việt", "翻成繁中"), do not ask. Default `zh-tw`
+  (台灣繁體中文; use 台灣用語 not 大陸用語). Any other code is rejected by `assemble.py` and `audit_suite.py`.
+  Write it into `state.json` as soon as the spine is extracted (Step 2), e.g.
+  `state.init_state(book_path, spine, target_lang)` then `state.save(...)`; everything later
+  (assemble, audits, prompts) reads it from there.
 - `style_hint` — optional user override of style anchor
 - `concurrency` — default 5; max 10 (CC quota safety)
 - `out_dir` — default same dir as input
@@ -723,6 +750,8 @@ discipline" below), batch size = `concurrency` (default 5). Each task's
 prompt is produced by `dispatch.build_subagent_prompt(...)` and includes:
 
 - Glossary (mandatory translations)
+- The target language: pass `target_lang=state["target_lang"]` to `dispatch.build_subagent_prompt(...)`
+  (omitting it silently builds the zh-tw prompt)
 - Style anchor (first 500 chars of ch.01 translation)
 - Carryover (last 200 chars of ch.<N-1> translation)
 - **Source paragraphs wrapped with `[[PARA_1]]`..`[[PARA_N]]` markers**
@@ -1045,6 +1074,8 @@ This skill writes to:
   source key; an ALL-CAPS source spelling may match a Title Case proper key.
 
 ### Building a small, decision-focused term list
+
+> **zh-tw only.** `build_terms.py` raises for any other language. For `vi`, skip this section.
 
 `scripts/build_terms.py` does **not** author an authoritative term table. It
 combines mechanical candidates with one or more LLM proposal JSON files and
