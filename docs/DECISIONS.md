@@ -34,3 +34,17 @@
 **Decision:** ubuntu-latest with Python 3.10 (documented minimum) and 3.12 (target), plus one windows-latest job on 3.12 because the author develops on Windows. Add concurrency cancel, read-only permissions, a 10-minute timeout and `workflow_dispatch`.
 **Alternatives considered:** Keep macOS (slower, scarcer runners, no one here uses it); a single Python version (misses 3.10 syntax breakage); full Windows matrix (one Python is enough to catch OS-specific breakage).
 **Consequences:** macOS-only regressions would go unseen. No CD exists or is needed: this is a skill, not a deployed service.
+
+## DECISION-006: Unknown target codes fall back to zh-tw (`resolve_profile`), `get_profile` stays strict
+
+**Context:** The golden file pins the zh rule text in the subagent prompt for `zh-cn` and `en` too, and `assemble` ignores `target_lang` today. A strict lookup in those paths would change behaviour.
+**Decision:** `lang_profile.get_profile(code)` raises `ValueError` on an unregistered code. `resolve_profile(code)` casefolds and returns the zh-tw profile for any unregistered code, including `None` and `""`. Existing entry points (`build_subagent_prompt`, `assemble`, the audits) use `resolve_profile`.
+**Alternatives considered:** Strict everywhere (changes pinned `zh-cn`/`en` prompts and breaks callers that pass other codes); silent default with no strict variant (no way to reject a typo like `vi ` once Vietnamese exists).
+**Consequences:** In Phase 1 a mistyped code silently produces zh-tw output, as it does today. Phase 2 must tighten this once `vi` is registered (at least reject codes for which no profile exists, in `assemble` and the CLI).
+
+## DECISION-007: LanguageProfile has 13 fields in Phase 1
+
+**Context:** The first DoD listed 8 fields, which could not satisfy the grep gate (the `zh-Hant`, footnote, edition and AUP strings live in nav, OPF and rewriter). A Fable Advise call (2026-11-11, see `docs/eagd-log.md`) recommended the larger set.
+**Decision:** `code`, `long_name`, `html_lang`, `target_class`, `structural_labels`, `contents_labels`, `prefix_labels`, `footnote_label`, `bilingual_edition_label`, `aup_refused_notice`, `prompt_rules`, `default_custom_instructions`, `is_target_text`. Plain dict fields in a frozen dataclass. Profiles are compared by `.code`, not identity. Helpers keep optional `profile` arguments that default to zh-tw, backed by a sentinel-profile guard test.
+**Alternatives considered:** The 8-field set plus a relaxed gate (leaves `lang="zh-Hant"` and `註腳 N` in a Vietnamese nav); a read-only mapping type (breaks sharing the same object with the legacy module-level names and the JSON dump).
+**Consequences:** Phase 2 mostly adds a second profile. Glossary prompt fragments, `GENERIC_SUBAGENT_RULES` and `format_fixed_terms` stay on the allow-list until Phase 2.

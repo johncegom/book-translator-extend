@@ -10,7 +10,11 @@ import re
 import sys
 from pathlib import PurePosixPath
 
-HAN_RE = re.compile(r"[\u4e00-\u9fff]")
+try:  # pragma: no cover - import mode depends on caller
+    from .lang_profile import HAN_RE, ZH_TW
+except ImportError:  # pragma: no cover
+    from lang_profile import HAN_RE, ZH_TW  # type: ignore
+
 _ASCII_LETTER_RE = re.compile(r"[A-Za-z]")
 _IDENTIFIER_RE = re.compile(r"[._A-Za-z0-9-]{6,}")
 _BARE_NUMBER_RE = re.compile(r"(?:[0-9]{1,4}|[IVXLCDM]{1,8})")
@@ -23,9 +27,10 @@ _URL_OR_EMAIL_RE = re.compile(r"(?:https?://|www\.|\S+@\S+)", re.IGNORECASE)
 LEGACY_ENGLISH_MIN_LENGTH = 50
 
 
-def is_english_content(text: str) -> bool:
-    """Whether coverage policy requires an adjacent Han translation."""
-    if len(text) < LEGACY_ENGLISH_MIN_LENGTH or HAN_RE.search(text):
+def is_english_content(text: str, profile=None) -> bool:
+    """Whether coverage policy requires an adjacent target-language translation."""
+    profile = ZH_TW if profile is None else profile
+    if len(text) < LEGACY_ENGLISH_MIN_LENGTH or profile.is_target_text(text):
         return False
     letters = len(_ASCII_LETTER_RE.findall(text))
     return letters >= max(20, int(len(text) * 0.35))
@@ -51,13 +56,14 @@ def _has_token(tokens: set[str], wanted: tuple[str, ...]) -> bool:
     return any(token in tokens for token in wanted)
 
 
-def untranslated_reason(path: str, node, text: str) -> str | None:
+def untranslated_reason(path: str, node, text: str, profile=None) -> str | None:
     """Return a reason for an already non-Han paragraph, never a skip decision.
 
     Position (page filename or publisher CSS class) is primary. Content-only
     identifier/non-Latin checks are deliberately narrow and are evaluated only
     after translation has produced no Han characters.
     """
+    profile = ZH_TW if profile is None else profile
     page = PurePosixPath(path).name.casefold()
     stem = PurePosixPath(path).stem.casefold()
     classes = {str(value).casefold() for value in node.get("class", [])}
@@ -95,7 +101,7 @@ def untranslated_reason(path: str, node, text: str) -> str | None:
         and ("_" in stripped or any(char.isdigit() for char in stripped))
     ):
         return "identifier"
-    if not _ASCII_LETTER_RE.search(stripped) and not HAN_RE.search(stripped):
+    if not _ASCII_LETTER_RE.search(stripped) and not profile.is_target_text(stripped):
         return "non_latin"
     return None
 

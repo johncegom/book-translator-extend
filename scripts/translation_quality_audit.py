@@ -15,6 +15,7 @@ try:
     from scripts.dispatch import contains_model_token_leak
     from scripts.epub_reader import EPUBReader
     from scripts.glossary import resolve_register
+    from scripts.lang_profile import ZH_TW
     from scripts.offline_postprocess import ambiguous_simplified_fixes
     from scripts.paragraph_classification import reasoned_source_only_entries
 except ModuleNotFoundError:  # pragma: no cover - direct script execution path
@@ -22,6 +23,7 @@ except ModuleNotFoundError:  # pragma: no cover - direct script execution path
     from dispatch import contains_model_token_leak
     from epub_reader import EPUBReader
     from glossary import resolve_register
+    from lang_profile import ZH_TW
     from offline_postprocess import ambiguous_simplified_fixes
     from paragraph_classification import reasoned_source_only_entries
 
@@ -70,9 +72,9 @@ def contains_simplified_chinese(text: str) -> bool:
     return bool(_offending_simplified_chinese_chars(text))
 
 
-def _contains_han(text: str) -> bool:
-    """True when text has any CJK Han character (i.e. it is already (inline-)translated)."""
-    return any("一" <= ch <= "鿿" for ch in text)
+def _contains_han(text: str, profile=None) -> bool:
+    """True when text is already (inline-)translated, per the profile's target-text check."""
+    return (ZH_TW if profile is None else profile).is_target_text(text)
 
 
 def audit(
@@ -80,13 +82,14 @@ def audit(
     min_length_ratio: float = 0.22,
     *,
     epub_path: str | None = None,
+    profile=None,
 ) -> tuple[bool, list[str]]:
     """Backward-compatible red-light audit result.
 
     Call :func:`audit_with_warnings` or :func:`run` to also receive yellow-light
     findings. Warnings never change the returned pass/fail gate result.
     """
-    failures, _warnings = _audit_findings(output, min_length_ratio, epub_path=epub_path)
+    failures, _warnings = _audit_findings(output, min_length_ratio, epub_path=epub_path, profile=profile)
     return not failures, failures
 
 
@@ -95,8 +98,9 @@ def audit_with_warnings(
     min_length_ratio: float = 0.22,
     *,
     epub_path: str | None = None,
+    profile=None,
 ) -> tuple[bool, list[str], list[str]]:
-    failures, warnings = _audit_findings(output, min_length_ratio, epub_path=epub_path)
+    failures, warnings = _audit_findings(output, min_length_ratio, epub_path=epub_path, profile=profile)
     return not failures, failures, warnings
 
 
@@ -105,7 +109,9 @@ def _audit_findings(
     min_length_ratio: float,
     *,
     epub_path: str | None,
+    profile=None,
 ) -> tuple[list[str], list[str]]:
+    profile = ZH_TW if profile is None else profile
     if epub_path is not None:
         output = epub_path
     if output is None:
@@ -126,10 +132,10 @@ def _audit_findings(
                 if not src_text:
                     continue
                 tgt = _next_tag(src)
-                if tgt is None or not _has_tgt_class(tgt):
+                if tgt is None or not _has_tgt_class(tgt, profile):
                     # Inline-bilingual paragraphs (e.g. ToC links rendered
                     # "English ｜ 中文") carry their translation in the same node.
-                    if src_text not in exceptions and not _contains_han(src_text):
+                    if src_text not in exceptions and not profile.is_target_text(src_text):
                         failures.append(f"{path}: source-only paragraph not in exceptions: {src_text[:120]}")
                     continue
                 tgt_text = _clean(tgt.get_text(" ", strip=True))
@@ -232,6 +238,7 @@ def run(
     output: Path,
     book_dir: Path | None = None,
     min_length_ratio: float | None = None,
+    profile=None,
 ) -> AuditResult:
     resolved_ratio = (
         _min_length_ratio_from_book_dir(book_dir)
@@ -239,7 +246,7 @@ def run(
         else min_length_ratio
     )
     passed, failures, warnings = audit_with_warnings(
-        output, min_length_ratio=resolved_ratio
+        output, min_length_ratio=resolved_ratio, profile=profile
     )
     status = "fail" if not passed else "warn" if warnings else "pass"
     return AuditResult(
@@ -266,9 +273,10 @@ def _has_src_class(value) -> bool:
     return "src" in classes
 
 
-def _has_tgt_class(node) -> bool:
+def _has_tgt_class(node, profile=None) -> bool:
+    profile = ZH_TW if profile is None else profile
     classes = set(node.get("class", []))
-    return bool(classes & {"tgt", "tgt-zh"})
+    return bool(classes & {"tgt", profile.target_class})
 
 
 def _next_tag(node):
