@@ -67,7 +67,7 @@ Phase 5 is a run, so the checks are commands on the output, plus the existing su
 
 - [x] 5.1 User approved this DoD and Test Plan and answered the open questions (2026-11-12)
 - [x] 5.1b `quota-guard` mod built, tested, install scripts smoke-tested in an isolated config dir (not yet installed in the user's Claude; the user runs the script)
-- [ ] 5.2 Pre-flight (A): extract, classification, state, glossary; record
+- [x] 5.2 Pre-flight (A): extract, classification, state, skill install done 2026-11-12 (glossary is left to the fresh session, SKILL.md Step 3, because it is an LLM call over the whole book); recorded in Results
 - [ ] 5.3 Style sample and tone gate (B)
 - [ ] 5.4 Pilot, then fan-out with Grade per batch (C, D)
 - [ ] 5.5 Assemble and four audits (E)
@@ -98,3 +98,14 @@ Phase 5 is a run, so the checks are commands on the output, plus the existing su
 3. **Tail pages:** `Notes`, `Image Credits`, "Thank you for buying this" and `Document Outline` become `source_only` in the pre-flight; the rest translate.
 4. **Stop rule accepted** (stop and report if more than 3 of the first 10 items need Opus escalation). **Quota ceiling: 85% of the 5-hour window, enforced automatically** by a small Claude mod, `tools/quota-guard/` (the user's `usage-band` mod only displays the figure, so a new mod reads `$.session.usage()` itself): it refuses new `Agent` calls while the 5-hour window is at or above the threshold (default 85) with the percent and reset time in the message, toasts once when crossed, releases by itself after the reset, and fails open if no figure exists. `install.ps1` / `install.sh` install it into the user's Claude (user scope). The assistant still reports after every batch of 5. The old `agent-orch` gate stays unused.
 5. **Reader:** Kindle (probably Send to Kindle, which converts the EPUB). Check in the read-back that the source and Vietnamese paragraphs both show in order, that Vietnamese diacritics render, and that the table of contents entries for the split chapters work. If Kindle's conversion drops the styling, that is a reader limit to record, not a pipeline failure.
+
+## Results
+
+### 5.2 Pre-flight (2026-11-12, numbers only)
+
+- Re-extracted from committed code: 23 spine items. Final classification: 16 `translate` (381,561 source characters), 7 `source_only` (`Title Page` file item_001, both `PART` dividers item_006 and item_011, `Image Credits` item_018, `Notes` item_019, "Thank you for buying this" item_021, `Document Outline` item_023). Edited in `manifest.json` (spine and the compat `chapters[]` list, now 16 entries), no code change.
+- Earlier "20 translate" in Facts counted the four items now set to `source_only`; the real work is 16 items.
+- `state.json` written via `state.init_state(..., 'vi')`: `target_lang: vi`, all items `pending`, `glossary_built: false`, `style_confirmed: false`.
+- Skill copied to `~/.claude/skills/book-translator/` (SKILL.md, scripts/, assets/, LICENSE, requirements.txt; no `runs/`, `.git`, tests). It matches the repo at `0eef0dc`.
+- `pytest -q`: 668 passed, 269 skipped (unchanged).
+- Glossary: not built here. The fresh session builds it (Step 3) with the `vi` profile.
