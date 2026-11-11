@@ -11,6 +11,7 @@ from ebooklib import epub  # re-exported for existing tests
 # Make sibling-module imports work whether invoked as a script or as `python -m scripts.assemble`.
 sys.path.insert(0, str(Path(__file__).parent))
 import archive_writer  # type: ignore  # noqa: E402
+import lang_profile as lang_profile_module  # type: ignore  # noqa: E402
 import bilingual_rewriter  # type: ignore  # noqa: E402
 from dispatch import html_to_paragraphs  # type: ignore  # noqa: E402
 import manifest as manifest_module  # type: ignore  # noqa: E402
@@ -68,6 +69,7 @@ def assemble(book_dir: Path, out_path: Path, strict_nav: bool = True) -> Path:
     translations_extra = _load_translations_extra(book_dir)
     spine_entries = [_entry_with_translations_extra(entry, translations_extra) for entry in _manifest_spine(manifest)]
     state = _load_state(book_dir)
+    profile = lang_profile_module.resolve_profile(state.get("target_lang"))
     translation_paths = _preflight(book_dir, spine_entries, state)
     source_epub = Path(str(manifest.get("source_epub", "")))
     opf_path = manifest.get("opf_path") or opf_builder.fallback_opf_path()
@@ -91,6 +93,7 @@ def assemble(book_dir: Path, out_path: Path, strict_nav: bool = True) -> Path:
             translations=translations,
             chapter_status=chapter_status,
             aup_reason=aup_reason,
+            profile=profile,
         )
         if isinstance(rewritten, tuple):
             item_html, item_warnings = rewritten
@@ -103,8 +106,8 @@ def assemble(book_dir: Path, out_path: Path, strict_nav: bool = True) -> Path:
 
     item_nav_path = nav_builder.nav_path(manifest, opf_path)
     if item_nav_path:
-        replacements[item_nav_path] = nav_builder.build_nav_xhtml(manifest, spine_entries, item_nav_path, opf_dir).encode("utf-8")
-        nav_zh_problems = nav_builder.missing_nav_zh_warnings(spine_entries)
+        replacements[item_nav_path] = nav_builder.build_nav_xhtml(manifest, spine_entries, item_nav_path, opf_dir, profile).encode("utf-8")
+        nav_zh_problems = nav_builder.missing_nav_zh_warnings(spine_entries, profile)
         if nav_zh_problems:
             if strict_nav:
                 raise ValueError(
@@ -122,15 +125,16 @@ def assemble(book_dir: Path, out_path: Path, strict_nav: bool = True) -> Path:
                 replacements[ncx_path] = nav_builder.patch_toc_ncx(
                     z.read(ncx_path).decode("utf-8", errors="replace"),
                     spine_entries,
+                    profile,
                 ).encode("utf-8")
 
-    _emit_translations_payload(book_dir, replacements, compatibility_items, opf_dir, represented_entries)
+    _emit_translations_payload(book_dir, replacements, compatibility_items, opf_dir, represented_entries, profile)
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     if source_epub.is_file():
         archive_writer.write_from_source_archive(source_epub, out_path, replacements, compatibility_items)
     else:
-        archive_writer.write_standalone_archive(book_dir, out_path, manifest, represented_entries, replacements, compatibility_items, opf_path)
+        archive_writer.write_standalone_archive(book_dir, out_path, manifest, represented_entries, replacements, compatibility_items, opf_path, profile)
 
     if warnings:
         print("Assembly warnings:", file=sys.stderr)
@@ -258,6 +262,7 @@ def _emit_translations_payload(
     compatibility_items: dict[str, bytes],
     opf_dir: str,
     represented_entries: list[dict],
+    profile=None,
 ) -> None:
     """Bundle translations metadata and reasoned source-only exceptions.
 
@@ -269,6 +274,8 @@ def _emit_translations_payload(
     import json as _json
     import re as _re
 
+    profile = lang_profile_module.ZH_TW if profile is None else profile
+
     translations_dir = book_dir / "translations"
     payload_dir = posixpath.join(opf_dir or "OEBPS", "translations")
     payload: dict[str, bytes] = {}
@@ -277,8 +284,6 @@ def _emit_translations_payload(
             payload[posixpath.join(payload_dir, path.name)] = path.read_bytes()
 
     source_only_key = posixpath.join(payload_dir, "source_only.json")
-    han = _re.compile(r"[一-鿿]")
-
     def _clean(text: str) -> str:
         return _re.sub(r"\s+", " ", text).strip()
 
@@ -308,24 +313,24 @@ def _emit_translations_payload(
             class_=lambda v: bool(v) and "src" in (v if isinstance(v, list) else str(v).split())
         ):
             txt = _clean(src_node.get_text(" ", strip=True))
-            if not txt or han.search(txt) or txt in seen:
+            if not txt or profile.is_target_text(txt) or txt in seen:
                 continue
             next_tag = src_node.find_next_sibling()
-            has_han_target = bool(
+            has_target_text = bool(
                 next_tag is not None
                 and "tgt" in set(next_tag.get("class", []))
-                and han.search(next_tag.get_text(" ", strip=True))
+                and profile.is_target_text(next_tag.get_text(" ", strip=True))
             )
-            if has_han_target:
+            if has_target_text:
                 continue
 
             reason: str | None = None
             if strategy == "source_only":
                 detail = str(entry.get("reason") or entry.get("role") or "declared")
                 reason = f"manifest_source_only:{detail}"
-            elif paragraph_classification_module.is_english_content(txt):
+            elif paragraph_classification_module.is_english_content(txt, profile):
                 reason = paragraph_classification_module.untranslated_reason(
-                    key, src_node, txt
+                    key, src_node, txt, profile
                 )
             if reason is None:
                 continue

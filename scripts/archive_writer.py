@@ -47,6 +47,7 @@ def write_standalone_archive(
     replacements: dict[str, bytes],
     compatibility_items: dict[str, bytes],
     opf_path: str,
+    profile=None,
 ) -> None:
     """Write the fallback EPUB archive when the source EPUB is not accessible."""
     opf_dir = posixpath.dirname(opf_path)
@@ -59,7 +60,7 @@ def write_standalone_archive(
         nav_path = detect_nav_path(manifest, opf_path)
         if nav_path and nav_path in replacements:
             out.writestr(nav_path, replacements[nav_path])
-        out.writestr(opf_path, build_minimal_opf(manifest, entries, opf_path, nav_path))
+        out.writestr(opf_path, build_minimal_opf(manifest, entries, opf_path, nav_path, profile))
 
 
 def _write_mimetype(out: zipfile.ZipFile) -> None:
