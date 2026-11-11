@@ -1,6 +1,6 @@
 # Task Ledger
 
-Current status: Phases 0 and 1 done and merged. Phase 2 (Vietnamese profile): DoD approved, sub-tasks 2.1 to 2.4 done (decisions, Advise call, golden pins, red tests and Vietnamese fixture); 2.5 (implement the vi profile and the new fields until the red tests pass) is next.
+Current status: Phases 0 and 1 done and merged. Phase 2 (Vietnamese profile): DoD approved, sub-tasks 2.1 to 2.5 done (decisions, Advise call, golden pins, red tests, implementation); 2.6 (DECISION entry) and 2.7 (verify the DoD, CI, PR) are next.
 
 Plan and rationale: `docs/plans/2026-11-11-vietnamese-language-profile.md`. This ledger tracks status only; a phase's DoD, test plan and notes live in its detail doc.
 
@@ -8,7 +8,7 @@ Plan and rationale: `docs/plans/2026-11-11-vietnamese-language-profile.md`. This
 |---|-------|--------|----------|--------|
 | 0 | Baseline | done 2026-11-11 | PR #2 (CI green: ubuntu py3.10/3.12, windows py3.12); `runs/alice/` extracts, 14 spine items | `docs/tasks/00-baseline/TASK.md` |
 | 1 | Profile with zh-tw only | done 2026-11-11 (PR #4 still draft and unmerged) | PR #4; CI run 42961118515 green on ubuntu 3.10/3.12 and windows 3.12, 472 passed / 269 skipped | `docs/tasks/01-profile-zh-tw/TASK.md` |
-| 2 | Vietnamese profile | in progress (DoD approved and amended 2026-11-11; 2.1-2.4 done) | | `docs/tasks/02-profile-vi/TASK.md` |
+| 2 | Vietnamese profile | in progress (DoD approved and amended 2026-11-11; 2.1-2.5 done) | | `docs/tasks/02-profile-vi/TASK.md` |
 | 3 | Detector and audits | not started | | created when Phase 2 is done |
 | 4 | Skill file | not started | | created when Phase 3 is done |
 | 5 | One full book | not started | | created when Phase 4 is done |
