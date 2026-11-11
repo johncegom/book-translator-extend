@@ -1,6 +1,6 @@
 # Task: Phase 2 — Vietnamese profile (`vi`)
 
-Status: DRAFT 2026-11-11. All five open questions decided. DoD awaiting the user's final approval. Nothing is implemented. Call Advise (once, for the new field set) before changing `LanguageProfile`.
+Status: not started. DoD approved by the user 2026-11-11 (all five open questions decided). Next: sub-task 2.2, the Advise call for the new fields. Nothing is implemented. Call Advise (once, for the new field set) before changing `LanguageProfile`.
 
 Depends on: Phase 1 (merged, PR #4). Plan: `docs/plans/2026-11-11-vietnamese-language-profile.md`. Decisions to honour: DECISION-002 (keep the `chapter_titles_zh` key), DECISION-006 (tighten `resolve_profile`), DECISION-007 (profile shape).
 
@@ -96,7 +96,7 @@ Regression and process
 
 ## Sub-tasks
 
-- [ ] 2.1 User answers the open questions and reviews the Vietnamese wording; DoD approved
+- [x] 2.1 User answers the open questions and reviews the Vietnamese wording; DoD approved (2026-11-11)
 - [ ] 2.2 Advise call for the field changes (log in `docs/eagd-log.md`)
 - [ ] 2.3 Golden group for the zh-tw glossary prompt, generic rules and register-hint rendering, derived from a `dac59fe` worktree
 - [ ] 2.4 Red tests: `test_lang_profile_vi.py`, then the Vietnamese frozen fixture and its snapshot
