@@ -17,17 +17,27 @@ import re
 from pathlib import Path
 
 try:  # pragma: no cover - import mode depends on caller
+    from .lang_profile import ZH_TW
     from .translations_extra import write_nav_overrides as write_translations_extra_nav_overrides
 except ImportError:  # pragma: no cover
+    from lang_profile import ZH_TW  # type: ignore
     from translations_extra import write_nav_overrides as write_translations_extra_nav_overrides  # type: ignore
 
 REGISTER_HINTS_PATH = Path(__file__).parent.parent / "assets" / "register_hints.json"
 
 
-def _load_register_hints() -> list[dict]:
-    if not REGISTER_HINTS_PATH.exists():
+def _hints_path(profile=None) -> Path:
+    """Register-hints file for a profile; no profile means the module default (zh-tw)."""
+    if profile is None:
+        return REGISTER_HINTS_PATH
+    return REGISTER_HINTS_PATH.parent / profile.register_hints_file
+
+
+def _load_register_hints(profile=None) -> list[dict]:
+    path = _hints_path(profile)
+    if not path.exists():
         return []
-    with REGISTER_HINTS_PATH.open(encoding="utf-8") as fh:
+    with path.open(encoding="utf-8") as fh:
         data = json.load(fh)
     registers = data.get("registers", [])
     if not isinstance(registers, list):
@@ -57,14 +67,13 @@ def _format_register_hints(registers: list[dict]) -> str:
 
 _REGISTER_HINTS_BLOCK = _format_register_hints(_load_register_hints())
 
-GLOSSARY_PROMPT = """\
+_GLOSSARY_PROMPT_BASE = """\
 You are building a translation glossary for a literary work being translated
-from {source_lang} to {target_lang} (台灣繁體中文 if target is zh-tw — use 台灣用語).
+from {source_lang} to {target_lang} (__TARGET_NOTE__).
 
 Read the full text below and extract:
   - characters: every named character. Translate each name in the target
-    language register (e.g. transliteration for English names unless a Chinese
-    convention exists).
+    language register (e.g. __NAME_ADVICE__).
   - places: named places, organizations, factions.
   - terms: domain-specific terminology, invented words, songs/poems referenced
     by name. Anything that must translate consistently across chapters.
@@ -72,15 +81,11 @@ Read the full text below and extract:
     from manifest.json::spine[] exactly as written to its {target_lang} chapter
     title. The main session passes those headings in the prompt context. Leave
     the value as "" if a heading is empty or looks like body prose over 120
-    characters. Use standard 台灣繁中 for structural pages (Cover, Title Page,
-    Copyright, Dedication, Introduction, Acknowledgments, Notes, About the
-    Author, Index, Glossary). For numbered chapters, use clean readable forms
-    such as "第一章　人工智慧的過去、現在與未來"; for part dividers, use forms
-    such as "第一部　RenAIssance 的基礎".
+    characters. __TITLE_RULES__
   - style_anchor: a JSON object describing the author's register so subagent
     translators can match the tone. Fields:
       register: one short phrase (e.g. "literary plain prose")
-      avoid:   2-4 things the translation should NOT do (e.g. "翻譯腔")
+      avoid:   2-4 things the translation should NOT do (e.g. "__AVOID_EXAMPLE__")
       prefer:  2-4 stylistic choices the translation SHOULD make
 
     Common book-type hints:
@@ -106,7 +111,33 @@ Do not add explanation or commentary. JSON only.
 
 === FULL BOOK TEXT ===
 {full_text}
-""".replace("__REGISTER_HINTS_BLOCK__", _REGISTER_HINTS_BLOCK)
+"""
+
+_GLOSSARY_SLOT_MARKERS = {
+    "target_note": "__TARGET_NOTE__",
+    "name_advice": "__NAME_ADVICE__",
+    "title_rules": "__TITLE_RULES__",
+    "avoid_example": "__AVOID_EXAMPLE__",
+}
+
+
+def build_glossary_prompt(profile=None) -> str:
+    """Glossary-extraction prompt for a language profile (default zh-tw).
+
+    The profile's ``glossary_prompt_slots`` fill four named slots and its register
+    hints file fills the hints block. Slot values must not contain braces: the
+    result is later passed through ``str.format``. The JSON key ``chapter_titles_zh``
+    keeps its name for every language (DECISION-002).
+    """
+    profile = ZH_TW if profile is None else profile
+    prompt = _GLOSSARY_PROMPT_BASE
+    for name, marker in _GLOSSARY_SLOT_MARKERS.items():
+        prompt = prompt.replace(marker, profile.glossary_prompt_slots[name])
+    block = _format_register_hints(_load_register_hints(profile=profile))
+    return prompt.replace("__REGISTER_HINTS_BLOCK__", block)
+
+
+GLOSSARY_PROMPT = build_glossary_prompt(ZH_TW)
 
 
 def parse_glossary(text: str) -> dict:
@@ -135,12 +166,13 @@ def parse_glossary(text: str) -> dict:
     return data
 
 
-def resolve_register(glossary: dict, register_hints: dict | None = None) -> dict | None:
+def resolve_register(glossary: dict, register_hints: dict | None = None, *, profile=None) -> dict | None:
     """Resolve glossary style_anchor.register to a configured register hint."""
     if register_hints is None:
-        if not REGISTER_HINTS_PATH.exists():
+        path = _hints_path(profile)
+        if not path.exists():
             return None
-        with REGISTER_HINTS_PATH.open(encoding="utf-8") as fh:
+        with path.open(encoding="utf-8") as fh:
             register_hints = json.load(fh)
 
     registers = register_hints.get("registers", [])
@@ -168,14 +200,15 @@ def resolve_register(glossary: dict, register_hints: dict | None = None) -> dict
     return None
 
 
-def resolve_register_override(register_id: str | None) -> dict | None:
+def resolve_register_override(register_id: str | None, *, profile=None) -> dict | None:
     """Resolve an explicit register hint id to a configured register."""
-    if not register_id or not REGISTER_HINTS_PATH.exists():
+    path = _hints_path(profile)
+    if not register_id or not path.exists():
         return None
     wanted = register_id.strip().casefold()
     if not wanted:
         return None
-    with REGISTER_HINTS_PATH.open(encoding="utf-8") as fh:
+    with path.open(encoding="utf-8") as fh:
         data = json.load(fh)
     registers = data.get("registers", [])
     if not isinstance(registers, list):
@@ -193,9 +226,18 @@ def resolve_register_rules(
     *,
     register_override: str | None = None,
     fallback_rules: list[str] | None = None,
+    profile=None,
 ) -> list[str]:
     """Resolve subagent prompt rules for a glossary register."""
-    register = resolve_register_override(register_override) if register_override else resolve_register(glossary)
+    if profile is None:
+        # Default path stays exactly as before (tests monkeypatch resolve_register with one argument).
+        register = resolve_register_override(register_override) if register_override else resolve_register(glossary)
+    else:
+        register = (
+            resolve_register_override(register_override, profile=profile)
+            if register_override
+            else resolve_register(glossary, profile=profile)
+        )
     rules = register.get("subagent_rules") if isinstance(register, dict) else None
     if isinstance(rules, list):
         cleaned = [str(rule).strip() for rule in rules if str(rule).strip()]
