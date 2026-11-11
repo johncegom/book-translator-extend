@@ -49,7 +49,7 @@ def get_profile(code: str) -> LanguageProfile: ...
 | `nav_builder.py` | Prefix labels, the word for "footnote" | Read from the profile |
 | `paragraph_classification.py` | `HAN_RE` decides "already translated" | Call `profile.is_target_text` |
 | `bilingual_coverage_audit.py` | Sibling must contain Han characters | Call `profile.is_target_text` |
-| `translation_quality_audit.py` | Han counts, Simplified Chinese check, 30% length rule | Profile ratio; skip Simplified check for `vi` |
+| `translation_quality_audit.py` | Han counts, Simplified Chinese check, 0.22 length-ratio default (not 30%; code default is 0.22 with a per-register override) | Profile ratio; skip Simplified check for `vi` |
 | `state.py`, `translate_chapter_cli.py` | Default `zh-tw` | Keep default, pass the code through |
 | `SKILL.md` | Triggers, defaults, author's agent-orch path | Add Vietnamese triggers and a `target_lang` step |
 
@@ -75,7 +75,7 @@ def get_profile(code: str) -> LanguageProfile: ...
 Chinese is detected by script; Vietnamese shares Latin letters with English, so another signal is needed.
 - A paragraph counts as Vietnamese when it contains Vietnamese-only letters (ă, â, đ, ê, ô, ơ, ư, or a tone-marked vowel). Apply only to paragraphs ≥ 50 characters (the threshold the code already uses).
 - Add an echo check: a translation equal to its source fails.
-- Re-measure the length ratio. Chinese is much shorter than English; Vietnamese is about the same length, so 30% is too weak.
+- Re-measure the length ratio. Chinese is much shorter than English; Vietnamese is about the same length, so the 0.22 default is too weak.
 - **Done when:** the coverage audit fails on a chapter left untranslated on purpose, and passes on a real one.
 
 ### Phase 4: The skill file
