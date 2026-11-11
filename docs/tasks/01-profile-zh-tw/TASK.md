@@ -1,6 +1,6 @@
 # Task: Phase 1 — Language profile with zh-tw only
 
-Status: in progress (1.1a, 1.1b, 1.2, 1.3 done; 1.4 waits on CI). DoD approved by the user 2026-11-11, after a Fable review (19 findings, verdict "approve with changes") was folded in. Call Advise once for the whole Phase 1 field set before 1.2 (CLAUDE.md).
+Status: done 2026-11-11 (all sub-tasks; PR #4, commit f111738 plus the CI result below). DoD approved by the user 2026-11-11, after a Fable review (19 findings, verdict "approve with changes") was folded in. Call Advise once for the whole Phase 1 field set before 1.2 (CLAUDE.md).
 
 Oracle: `main` at `bb0eb35`. Derive every golden value from a worktree of that commit (`git worktree add ../bt-oracle bb0eb35`), never from memory.
 
@@ -18,9 +18,9 @@ Out (stay as they are in Phase 1):
 
 Tests and baseline
 - [x] No existing test or config file is changed: `git diff --diff-filter=MDRT --name-only bb0eb35 -- test/ conftest.py requirements-dev.txt requirements.txt .github/` prints nothing. New files are allowed only under `test/golden/` and as `test/test_lang_profile.py`.
-- [ ] `pytest -q --ignore=test/golden --ignore=test/test_lang_profile.py` gives 438 passed, 269 skipped, 0 failed on Windows. The same command on the CI ubuntu job gives the same passed/skipped counts as the CI run on `bb0eb35` (record both in Notes).
+- [x] `pytest -q --ignore=test/golden --ignore=test/test_lang_profile.py` gives 438 passed, 269 skipped, 0 failed on Windows. The same command on the CI ubuntu job gives the same passed/skipped counts as the CI run on `bb0eb35` (record both in Notes).
 - [x] Full `pytest -q` gives 438 + N passed (N recorded in Notes), 0 failed, 269 skipped.
-- [ ] CI is green on the PR (ubuntu py 3.10/3.12, windows py 3.12).
+- [x] CI is green on the PR (ubuntu py 3.10/3.12, windows py 3.12).
 
 Golden (ground-truth) tests, under `test/golden/`
 - [x] Characterization tests call existing entry points and pass at `bb0eb35` (run in the worktree) and after every conversion step. Each golden file records the command that derived it in a header comment.
@@ -81,7 +81,7 @@ Conversion order is leaf first because `nav_builder` imports the rewriter's tabl
 - [x] 1.1b Golden cases derived from the `bb0eb35` worktree; characterization tests committed green before any code change
 - [x] 1.2 Advise call done (Fable, one-time override, logged); `test/test_lang_profile.py` committed red first (`3e49f3e`), then `scripts/lang_profile.py` (`e949cf5`). Registry/shape tests are green; the 7 sentinel guard tests stay red until their consumer is converted in 1.3
 - [x] 1.3 Consumers converted leaf-first, one commit each, suite + snapshot checked after each: paragraph_classification, bilingual_rewriter, nav_builder, opf_builder, assemble (+ archive_writer plumbing), bilingual_coverage_audit, translation_quality_audit, audit_suite, dispatch (subagent prompt only). glossary deliberately deferred (DoD allow-list).
-- [ ] 1.4 Verify the DoD (diff checks, grep gate, hashes, scope guard, CI green); update `docs/LEDGER.md`
+- [x] 1.4 Verify the DoD (diff checks, grep gate, hashes, scope guard, CI green); update `docs/LEDGER.md`
 
 ## Notes / deviations
 - Plan fix: the audit's length-rule default is 0.22 (`translation_quality_audit.py:80,95`), not 30%.
@@ -98,3 +98,4 @@ Conversion order is leaf first because `nav_builder` imports the rewriter's tabl
 - Grep-gate allow-list (what still matches `grep -nP '[\x{3400}-\x{9fff}]|zh-Hant|tgt-zh'`): comments and docstrings in `nav_builder`, `bilingual_rewriter`, `bilingual_coverage_audit`, `translation_quality_audit`; `未命名` in `nav_builder._nav_label` (no production caller); `BANNED_PATTERNS`, `SIMPLIFIED_CHINESE_CHARS`, `_HAN_RE` (the U+3400 range) and the `"譯文："` special case in `translation_quality_audit` (Simplified gate, out of scope); the glossary prompt fragments in `glossary.py` (lines 62-83, deferred); in `dispatch.py` `GENERIC_SUBAGENT_RULES`, `format_fixed_terms`, the ollama/minimal prompt constants, and the non-zh-tw rows of `_target_long`. The assemble error text and the "missing adjacent zh" message contain no Han and stay. The escape-written Han range now lives only in `lang_profile.HAN_RE` and `translation_quality_audit._HAN_RE` (checked by hand).
 - Behaviour notes: `build_subagent_prompt(profile=None)` uses `resolve_profile(target_lang)` for the rules and `_target_long(target_lang)` for the display name, so the pinned `zh-cn`/`en` prompts are unchanged; an explicit profile supplies both. `SUBAGENT_PROMPT_TEMPLATE` and `DEFAULT_CUSTOM_INSTRUCTIONS` remain as zh-tw-rendered aliases. A profile's `prompt_rules` must not contain braces (it is substituted before `str.format`).
 - Commit hygiene: three local commit messages briefly carried stray `EOF` / `)` lines from a shell heredoc slip; they were rewritten before pushing (unpushed commits only).
+- 1.4 (done): CI run 42961118515 on `feat/lang-profile-zh-tw` (manual dispatch, because the draft PR's base is not `main` so `pull_request` did not fire): ubuntu 3.10, ubuntu 3.12 and windows 3.12 all green with 472 passed, 269 skipped. The baseline CI run at `bb0eb35` (run 42890688752) had 438 passed, 269 skipped on all three; 472 = 438 + 34 new tests, skipped unchanged. The old-subset command was run explicitly only on Windows locally (438 passed, 269 skipped); on ubuntu the equality is derived from the totals, not a separate run.
