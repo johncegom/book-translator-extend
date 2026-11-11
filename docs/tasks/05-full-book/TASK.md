@@ -68,10 +68,11 @@ Phase 5 is a run, so the checks are commands on the output, plus the existing su
 - [x] 5.1 User approved this DoD and Test Plan and answered the open questions (2026-11-12)
 - [x] 5.1b `quota-guard` mod built, tested, install scripts smoke-tested in an isolated config dir (not yet installed in the user's Claude; the user runs the script)
 - [x] 5.2 Pre-flight (A): extract, classification, state, skill install done 2026-11-12 (glossary is left to the fresh session, SKILL.md Step 3, because it is an LLM call over the whole book); recorded in Results
-- [ ] 5.3 Style sample and tone gate (B)
-- [ ] 5.4 Pilot, then fan-out with Grade per batch (C, D)
-- [ ] 5.5 Assemble and four audits (E)
-- [ ] 5.6 Recalibration with `measure.py`; Advise only if a threshold must change (F)
+- [x] 5.3 Style sample and tone gate (B): approved 2026-11-12 on round 2 (round 1 re-translated with anti-AI-tone instructions)
+- [x] 5.4 Pilot, then fan-out with Grade per batch (C, D): 16 of 16 done, 0 retries, 0 escalations; Grade run on the pilot and on batches 1 to 3 (findings below)
+- [x] 5.4b BUG-006 found by the first audit, fixed in PR #15 (user chose the code fix)
+- [~] 5.5 Assemble and four audits (E): assembled; 2 of 4 PASS, see Results (not yet 4 of 4)
+- [~] 5.6 Recalibration with `measure.py` (F): numbers recorded, Advise done, no threshold change; waiting for the user's call on 4 of 4
 - [ ] 5.7 User read-back and fresh-session check (G, H)
 - [ ] 5.8 Dream, bugs, decisions, retro, ledger, PR; verify DoD
 
@@ -109,3 +110,12 @@ Phase 5 is a run, so the checks are commands on the output, plus the existing su
 - Skill copied to `~/.claude/skills/book-translator/` (SKILL.md, scripts/, assets/, LICENSE, requirements.txt; no `runs/`, `.git`, tests). It matches the repo at `0eef0dc`.
 - `pytest -q`: 668 passed, 269 skipped (unchanged).
 - Glossary: not built here. The fresh session builds it (Step 3) with the `vi` profile.
+
+### 5.3 to 5.6 Run (2026-11-12, numbers only)
+
+- **Run shape:** glossary 49 characters / 29 places / 44 terms / 16 chapter titles, built by a Sonnet subagent that read two items in full and skimmed the rest (a weaker glossary than the skill intends; "more" and similar common words became keys). Introduction by Opus, the other 15 items by Sonnet in a pilot of 2 and three batches of 5, 5 and 3. Every item passed `validate_translation` on the first try: 0 retries, 0 Opus escalations (stop rule never near). Anti-AI-tone instructions (from the `sound-human` skill, adapted to Vietnamese translation) live in `custom_instructions.txt` of the run folder.
+- **Audits, after the BUG-006 fix:** structural PASS, href_resolve PASS, bilingual_coverage FAIL (1 line), translation_quality FAIL (1 line); 24 output lines incl. stderr warnings. Before the fix: about 1,200 lines (99% from `source_only` items inside split files).
+  - The coverage line is the detector false negative below. The quality line is the 0.57 length ratio below.
+- **`measure.py` over 1,461 translated paragraphs (1,268 of 50+ source characters):** length ratio min 0.571, p1 0.691, p5 0.801, median 0.984, 1 below 0.60. Detector share on the translations: min 0.231, p1 0.395, p5 0.492, median 0.627; `is_target_text` false for 1 paragraph of 50+ (share 0.231) and 64 of the shorter ones. Detector share over the English source: max 0.000, 0 of 1,268 at or above 0.17. Paragraphs of 50+ without terminal punctuation: 202 in the translation, 198 in the source (the page-break fragments of fact 3; the translator kept them as fragments).
+- **Recalibration verdict:** 0.60 length ratio and 0.25 detector share confirmed on n = 1,268, no change. Advise (opus, logged) said keep 0.25: the one false negative is a correct 53-character sentence of short Latin-1-accent syllables (3 of 13 counted tokens match); lowering the cutoff later is possible because the English side is empty above 0, but it needs its own change with an Advise call and a DECISIONS entry, not tuning to this paragraph. The 0.57 paragraph is a correct, concise translation; neither paragraph was reworded to pass.
+- **Grade (haiku) findings, all judged not translation defects:** (b) failed only on list labels like "1." (rubric tightened to 50+ characters after the pilot); (c) glossary misses: the Potbelly Hill misses are the Vietnamese name used without the first-mention gloss in parentheses, and the Anthropocene misses are the same shape. The glossary value carries a gloss meant for the first mention; the check wants it every time. (a) one item hit the detector false negative; (d) one item hit the 0.57 paragraph.
