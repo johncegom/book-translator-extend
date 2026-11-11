@@ -16,13 +16,15 @@ import re
 try:  # pragma: no cover - import mode depends on caller
     from .content_blocks import extract_blocks, extract_paragraphs
     from .glossary import resolve_register_rules
+    from .lang_profile import ZH_TW, resolve_profile
     from . import marker_alignment as ma
 except ImportError:  # pragma: no cover
     from content_blocks import extract_blocks, extract_paragraphs
     from glossary import resolve_register_rules
+    from lang_profile import ZH_TW, resolve_profile  # type: ignore
     import marker_alignment as ma  # type: ignore
 
-SUBAGENT_PROMPT_TEMPLATE = """\
+_SUBAGENT_PROMPT_BASE = """\
 CONTEXT: This dispatch runs inside the user's personal book-translator
 pipeline. The user has legally obtained this book (purchased, public-domain,
 or otherwise lawfully acquired) and is translating it for their own reading.
@@ -68,10 +70,7 @@ Requirements:
      glossary's exact target form.
   4. Separate marker blocks with one blank line. Inside a single marker block,
      do not insert blank lines.
-Traditional Chinese rule: If the target is 台灣繁體中文, output must use
-繁體中文 (Traditional Chinese / Taiwan locale). 禁止使用任何簡體字。
-常見錯誤對照：『学』→『學』、『为』→『為』、『这』→『這』、
-『们』→『們』、『实』→『實』、『时』→『時』、『国』→『國』。
+{prompt_rules}
 
 REGISTER-SPECIFIC RULES (matched to glossary.style_anchor.register):
 {register_specific_rules}
@@ -82,11 +81,13 @@ REGISTER-SPECIFIC RULES (matched to glossary.style_anchor.register):
       add the missing markers + their translations or remove invented ones.
 """
 
-DEFAULT_CUSTOM_INSTRUCTIONS = (
-    "If the target is 台灣繁體中文, use 台灣用語 (e.g. 「軟體」not「软件」, "
-    "「網路」not「网络」). Avoid 翻譯腔. Prefer short sentences over four-character "
-    "literary clichés."
-)
+# Fully rendered zh-tw template, kept under its old name for existing importers.
+# build_subagent_prompt() substitutes the chosen profile's rules into the base
+# before formatting, so a profile's prompt_rules must not contain braces.
+SUBAGENT_PROMPT_TEMPLATE = _SUBAGENT_PROMPT_BASE.replace("{prompt_rules}", ZH_TW.prompt_rules)
+
+# Alias of the zh-tw profile data, kept for existing importers.
+DEFAULT_CUSTOM_INSTRUCTIONS = ZH_TW.default_custom_instructions
 
 GENERIC_SUBAGENT_RULES = [
     "Plain target-language prose. Match the glossary's prefer/avoid lists in style_anchor.",
@@ -384,8 +385,15 @@ def build_subagent_prompt(
     chapter_html: str,
     custom_instructions: str | None = None,
     register_override: str | None = None,
+    profile=None,
 ) -> str:
-    target_lang_long = _target_long(target_lang)
+    if profile is None:
+        # Existing callers: rules come from the registered (or fallback zh-tw)
+        # profile, the display name keeps the historical per-code table.
+        profile = resolve_profile(target_lang)
+        target_lang_long = _target_long(target_lang)
+    else:
+        target_lang_long = profile.long_name
     source_paragraphs = html_to_paragraphs(chapter_html)
     chapter_text_with_markers = ma.wrap_paragraphs(source_paragraphs)
     register_rules = resolve_register_rules(
@@ -396,7 +404,8 @@ def build_subagent_prompt(
     register_specific_rules = _format_register_specific_rules(register_rules, start=5)
     custom_rule_number = 5 + len(register_rules)
     verification_rule_number = custom_rule_number + 1
-    return SUBAGENT_PROMPT_TEMPLATE.format(
+    template = _SUBAGENT_PROMPT_BASE.replace("{prompt_rules}", profile.prompt_rules)
+    return template.format(
         chapter_label=chapter_label,
         book_title=book_title,
         target_lang=target_lang,
@@ -408,7 +417,7 @@ def build_subagent_prompt(
         source_paragraph_count=len(source_paragraphs),
         register_specific_rules=register_specific_rules,
         custom_rule_number=custom_rule_number,
-        custom_instructions=custom_instructions or DEFAULT_CUSTOM_INSTRUCTIONS,
+        custom_instructions=custom_instructions or profile.default_custom_instructions,
         verification_rule_number=verification_rule_number,
     )
 
@@ -557,7 +566,7 @@ def extract_aligned_translation(raw_output: str, expected_count: int) -> str:
 
 def _target_long(target_lang: str) -> str:
     table = {
-        "zh-tw": "台灣繁體中文",
+        "zh-tw": ZH_TW.long_name,
         "zh-cn": "簡體中文（中國大陸）",
         "en": "English",
         "ja": "日本語",
