@@ -1,6 +1,6 @@
 # Task: Phase 4 — The skill file (`SKILL.md`) and the fixes scheduled for it
 
-Status: DRAFT. Open questions answered 2026-11-12 (see the end of this doc); awaiting the user's explicit approval of the Definition of Done and Test Plan.
+Status: in progress. DoD and Test Plan approved by the user 2026-11-12; open-question answers recorded below.
 
 Depends on: Phase 3 (PR #7, CI green, unmerged at the time of writing). Plan: `docs/plans/2026-11-11-vietnamese-language-profile.md` (Phase 4: Vietnamese trigger phrases, a step that asks for the target language, remove or make optional the `agent-orch` quota line; done when a fresh Claude Code session runs the skill with `vi` without manual fixes). Bugs scheduled here (`docs/BUGS.md`): BUG-001 (decide), BUG-002, BUG-003. Decision carried from Phase 2: `build_terms.py` is not available for `vi`.
 
@@ -49,8 +49,8 @@ C. **BUG-001**: decision first, then (if a fix is chosen) the fix before Phase 5
 
 ## Sub-tasks
 
-- [ ] 4.1 User approves this DoD and Test Plan (open questions answered 2026-11-12; explicit approval still needed)
-- [ ] 4.2 BUG-001 decision written (DECISIONS.md) and BUGS.md updated
+- [x] 4.1 User approved the DoD and Test Plan 2026-11-12 (with the open-question answers)
+- [x] 4.2 BUG-001 decision written (DECISIONS.md) and BUGS.md updated (DECISION-013)
 - [ ] 4.3 Red tests for BUG-002 and BUG-003; Advise call for the default ratio; fixes
 - [ ] 4.4 `SKILL.md` edits (A) and the structural test
 - [ ] 4.5 Dry run on the Alice excerpt; record results
