@@ -1,6 +1,6 @@
 # Task: Phase 1 — Language profile with zh-tw only
 
-Status: in progress (1.1a, 1.1b done; next 1.2). DoD approved by the user 2026-11-11, after a Fable review (19 findings, verdict "approve with changes") was folded in. Call Advise once for the whole Phase 1 field set before 1.2 (CLAUDE.md).
+Status: in progress (1.1a, 1.1b, 1.2 done; next 1.3). DoD approved by the user 2026-11-11, after a Fable review (19 findings, verdict "approve with changes") was folded in. Call Advise once for the whole Phase 1 field set before 1.2 (CLAUDE.md).
 
 Oracle: `main` at `bb0eb35`. Derive every golden value from a worktree of that commit (`git worktree add ../bt-oracle bb0eb35`), never from memory.
 
@@ -79,7 +79,7 @@ Fill because the change touches many files whose interaction is not obvious.
 Conversion order is leaf first because `nav_builder` imports the rewriter's tables and `assemble` re-exports both. One commit per file; after each, run `pytest -q` and the frozen-book comparison. Open a draft PR after 1.2 so CI runs on every commit.
 - [x] 1.1a Frozen zh-tw fixture built (option A, hand-written translations) and baseline recorded; see Notes. Files: `docs/tasks/01-profile-zh-tw/frozen-fixture/`
 - [x] 1.1b Golden cases derived from the `bb0eb35` worktree; characterization tests committed green before any code change
-- [ ] 1.2 Advise call for the Phase 1 field set; add `lang_profile.py` and the zh-tw profile (profile-API tests committed first, red)
+- [x] 1.2 Advise call done (Fable, one-time override, logged); `test/test_lang_profile.py` committed red first (`3e49f3e`), then `scripts/lang_profile.py` (`e949cf5`). Registry/shape tests are green; the 7 sentinel guard tests stay red until their consumer is converted in 1.3
 - [ ] 1.3 Convert consumers in this order: `paragraph_classification` → `bilingual_rewriter` → `nav_builder` → `opf_builder` → `assemble` → `bilingual_coverage_audit` and `translation_quality_audit` → `dispatch` (`build_subagent_prompt` only) → `glossary`
 - [ ] 1.4 Verify the DoD (diff checks, grep gate, hashes, scope guard, CI green); update `docs/LEDGER.md`
 
