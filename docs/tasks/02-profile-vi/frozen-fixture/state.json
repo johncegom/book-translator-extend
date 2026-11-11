@@ -1,0 +1,11 @@
+{
+  "book": "alice.epub",
+  "target_lang": "vi",
+  "glossary_built": true,
+  "style_confirmed": true,
+  "chapters": {
+    "item_002": {"output_strategy": "translate", "status": "done"},
+    "item_003": {"output_strategy": "translate", "status": "done"},
+    "item_004": {"output_strategy": "translate", "status": "done"}
+  }
+}

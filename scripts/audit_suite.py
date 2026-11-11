@@ -10,26 +10,30 @@ from pathlib import Path
 try:  # pragma: no cover - import mode depends on caller
     from .audit_result import AuditResult
     from . import bilingual_coverage_audit
-    from .lang_profile import resolve_profile
+    from .lang_profile import ZH_TW, get_profile
     from . import href_resolve_audit
     from . import structural_audit
     from . import translation_quality_audit
 except ImportError:  # pragma: no cover
     from audit_result import AuditResult  # type: ignore
     import bilingual_coverage_audit  # type: ignore
-    from lang_profile import resolve_profile  # type: ignore
+    from lang_profile import ZH_TW, get_profile  # type: ignore
     import href_resolve_audit  # type: ignore
     import structural_audit  # type: ignore
     import translation_quality_audit  # type: ignore
 
 
 def _profile_for_book(book_dir: Path):
-    """Profile named by <book_dir>/state.json target_lang; missing file or key means zh-tw."""
+    """Profile named by <book_dir>/state.json target_lang; missing file or key means zh-tw.
+
+    A code with no registered profile raises ValueError before any audit runs.
+    """
     try:
         state = json.loads((book_dir / "state.json").read_text(encoding="utf-8"))
     except (OSError, ValueError):
         state = {}
-    return resolve_profile(state.get("target_lang") if isinstance(state, dict) else None)
+    code = state.get("target_lang") if isinstance(state, dict) else None
+    return get_profile(code) if code else ZH_TW
 
 
 def run_all(source: Path, output: Path, book_dir: Path) -> list[AuditResult]:

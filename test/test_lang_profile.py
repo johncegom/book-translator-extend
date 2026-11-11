@@ -32,6 +32,8 @@ EXPECTED_FIELDS = {
     "code", "long_name", "html_lang", "target_class", "structural_labels", "contents_labels", "prefix_labels",
     "footnote_label", "bilingual_edition_label", "aup_refused_notice", "prompt_rules",
     "default_custom_instructions", "is_target_text",
+    # added in Phase 2 (17 fields total)
+    "register_hints_file", "glossary_prompt_slots", "generic_rules", "simplified_gate",
 }
 
 
@@ -90,10 +92,10 @@ def test_get_profile_is_strict_and_case_insensitive_for_registered_codes():
     assert get_profile("zh-tw").code == "zh-tw"
     assert get_profile("ZH-TW").code == "zh-tw"
     with pytest.raises(ValueError):
-        get_profile("vi")
+        get_profile("vn")
 
 
-@pytest.mark.parametrize("code", ["zh-tw", "ZH-TW", "zh-TW", "zh-cn", "en", "ja", "ko", "fr", "", "vi"])
+@pytest.mark.parametrize("code", ["zh-tw", "ZH-TW", "zh-TW", "zh-cn", "en", "ja", "ko", "fr", "", "vn"])
 def test_resolve_profile_falls_back_to_zh_tw(code):
     assert resolve_profile(code).code == "zh-tw"
 

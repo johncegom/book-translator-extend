@@ -48,3 +48,24 @@
 **Decision:** `code`, `long_name`, `html_lang`, `target_class`, `structural_labels`, `contents_labels`, `prefix_labels`, `footnote_label`, `bilingual_edition_label`, `aup_refused_notice`, `prompt_rules`, `default_custom_instructions`, `is_target_text`. Plain dict fields in a frozen dataclass. Profiles are compared by `.code`, not identity. Helpers keep optional `profile` arguments that default to zh-tw, backed by a sentinel-profile guard test.
 **Alternatives considered:** The 8-field set plus a relaxed gate (leaves `lang="zh-Hant"` and `註腳 N` in a Vietnamese nav); a read-only mapping type (breaks sharing the same object with the legacy module-level names and the JSON dump).
 **Consequences:** Phase 2 mostly adds a second profile. Glossary prompt fragments, `GENERIC_SUBAGENT_RULES` and `format_fixed_terms` stay on the allow-list until Phase 2.
+
+## DECISION-008: `assemble` and `audit_suite` reject a `target_lang` with no profile
+
+**Context:** DECISION-006 left `assemble` and the audits on lenient lookup and said Phase 2 must tighten it once `vi` exists.
+**Decision:** When `state.json` carries `target_lang`, `assemble` and `audit_suite` use strict `get_profile` and raise `ValueError` before writing anything. A missing `target_lang` still means zh-tw. `build_subagent_prompt` stays lenient (`resolve_profile`) because the golden file pins `zh-cn/en/ja/ko` prompt text.
+**Alternatives considered:** Lenient everywhere (a typo such as `vn` silently yields a Chinese book); strict in the prompt builder too (changes pinned zh-cn/en output).
+**Consequences:** Supersedes the "tighten in Phase 2" note in DECISION-006. `zh-cn` and `ja` prompts still build but fail at assemble, which is acceptable because only zh-tw and vi are supported targets.
+
+## DECISION-009: LanguageProfile grows to 17 fields in Phase 2
+
+**Context:** Vietnamese needs its own register hints, glossary prompt wording, generic subagent rules and Simplified-Chinese gate.
+**Decision:** Add `register_hints_file`, `glossary_prompt_slots`, `generic_rules`, `simplified_gate`. The glossary prompt is one base string with five substitution slots (values contain no braces). `GLOSSARY_PROMPT` stays as the byte-identical zh-tw rendering. `BANNED_PATTERNS` apply to every profile.
+**Alternatives considered:** A separate Vietnamese prompt file (duplicates the shared rules and drifts); deriving the register file name from the code (hides the choice, breaks a profile with no hints).
+**Consequences:** Vietnamese register names are deliberately distinct from the zh-tw ones so a vi glossary cannot resolve to a Chinese register. `vi` registers set no `min_length_ratio` until Phase 3 measures one.
+
+## DECISION-010: Vietnamese detector = distinctive letters plus a small function-word list (supersedes the letter rule in DECISION-003)
+
+**Context:** Compared the Vietnamese alphabet (Wikipedia), the Unicode Vietnamese block U+1EA0–U+1EF9, the bamboo-core vowel/mark tables, a published heuristic detector and CLD2's design notes. ă đ ơ ư ĩ ũ and the tone-stacked block are Vietnamese-distinctive; â ê ô and Latin-1 accents are shared with French and Portuguese. Letters alone miss text like "Xin chào".
+**Decision:** `is_target_text` is true when the text has a distinctive letter (current rule) or at least one unambiguous Vietnamese function word from a short list (e.g. của, và, không, những, được). Implemented and tested in Phase 3 with labelled samples (vi, fr, pt, en), after an Advise call. The 50-char, mixed-text and echo rules stay as in DECISION-003.
+**Alternatives considered:** Letters only (known false negative); diacritic-density threshold (needs labelled data, closer to French); a language-ID library (new dependency, weak on short text).
+**Consequences:** The word list needs maintenance. Known false positives remain: ă (Romanian) and đ (Croatian) in source text, judged negligible for English sources.

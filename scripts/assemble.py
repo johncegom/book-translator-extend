@@ -69,7 +69,10 @@ def assemble(book_dir: Path, out_path: Path, strict_nav: bool = True) -> Path:
     translations_extra = _load_translations_extra(book_dir)
     spine_entries = [_entry_with_translations_extra(entry, translations_extra) for entry in _manifest_spine(manifest)]
     state = _load_state(book_dir)
-    profile = lang_profile_module.resolve_profile(state.get("target_lang"))
+    # A missing target_lang means zh-tw; a code with no profile (e.g. a typo such as "vn")
+    # is an error here, never a silent zh-tw book (DECISION-006, tightened in Phase 2).
+    target_lang = state.get("target_lang")
+    profile = lang_profile_module.get_profile(target_lang) if target_lang else lang_profile_module.ZH_TW
     translation_paths = _preflight(book_dir, spine_entries, state)
     source_epub = Path(str(manifest.get("source_epub", "")))
     opf_path = manifest.get("opf_path") or opf_builder.fallback_opf_path()
