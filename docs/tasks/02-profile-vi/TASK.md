@@ -1,6 +1,6 @@
 # Task: Phase 2 — Vietnamese profile (`vi`)
 
-Status: not started. DoD approved by the user 2026-11-11 (all five open questions decided). Next: sub-task 2.2, the Advise call for the new fields. Nothing is implemented. Call Advise (once, for the new field set) before changing `LanguageProfile`.
+Status: in progress (2.1, 2.2 done; 2.3 next). DoD approved 2026-11-11 and amended the same day after the Advise call (user-approved).
 
 Depends on: Phase 1 (merged, PR #4). Plan: `docs/plans/2026-11-11-vietnamese-language-profile.md`. Decisions to honour: DECISION-002 (keep the `chapter_titles_zh` key), DECISION-006 (tighten `resolve_profile`), DECISION-007 (profile shape).
 
@@ -61,13 +61,13 @@ Not adopted: `Kết luận` and `Nhà Xuất bản` (no matching English keys in
 Profile and data
 - [ ] `vi` is registered; `get_profile("vi")` returns it, `get_profile("VI")` too. Profiles are compared by `.code`.
 - [ ] The Vietnamese label tables, prefix labels, footnote label, edition label and AUP notice are as approved in the table above (user-reviewed wording).
-- [ ] `is_target_text` for `vi`: true for a string with a Vietnamese-only letter or tone-marked vowel; false for plain English, for "café"/"naïve"/"façade" (a French accent alone is not Vietnamese), for empty and for ASCII-only text. Unit-tested with at least 20 labelled samples (test-first, ordinary TDD per CLAUDE.md; no oracle exists). Thresholds, the 50-character rule and the echo check stay in Phase 3.
-- [ ] The Simplified-Chinese gate is skipped for `vi`: `_offending_simplified_chinese_chars` is only evaluated when the active profile declares it (a new field or an explicit `if profile.code.startswith("zh")` guard; choose in the Advise call). `BANNED_PATTERNS` are zh-only and not applied to `vi`.
+- [ ] `is_target_text` for `vi` (amended after the Advise call): true when the NFC-normalised text contains a letter distinctive to Vietnamese: ă, đ, ơ, ư, ĩ, ũ (either case) or any character in U+1EA0–U+1EF9 (tone-marked vowels). The circumflex letters â ê ô are NOT counted: French uses them (crêpe, château, rôle). False for plain English, for "café"/"naïve"/"façade"/"crêpe"/"château", for the empty string and ASCII-only text. At least 20 labelled samples, test-first. The 50-character rule, the threshold for mixed text (a single "Nguyễn" in an English paragraph), the echo check and the length ratio stay in Phase 3; do NOT pin the mixed-text behaviour in Phase 2.
+- [ ] `simplified_gate: bool` on the profile (zh-tw True, vi False). When False, only the "target contains Simplified Chinese characters" finding in `translation_quality_audit` (the `_offending_simplified_chinese_chars` call) is skipped. `BANNED_PATTERNS` are NOT switched: the list holds language-neutral entries (`PARTI`, `(untitled)`, `<|`, …) and its Chinese entries cannot match Vietnamese text, so the whole list applies to every profile.
 
 Register hints, glossary and prompts
-- [ ] Per Open Question 1: a Vietnamese register file exists (≥ the two registers literary fiction and non-fiction narrative, Vietnamese `prefer`/`avoid`/`subagent_rules`, `min_length_ratio` set from a measurement, not copied from zh), and `resolve_register`, `resolve_register_override` and `resolve_register_rules` take the profile. For zh-tw the loaded data and the rendered prompt are unchanged (golden `prompt` group still passes).
-- [ ] `GLOSSARY_PROMPT` is rendered from the profile (target language name, name-handling advice, chapter-title examples such as `Chương 1: …`); the zh-tw rendering is byte-identical to today (pin the current text in a new golden group derived from `dac59fe` first, then refactor).
-- [ ] `GENERIC_SUBAGENT_RULES` becomes profile-driven; zh-tw output unchanged; `vi` gets Vietnamese-appropriate fallback rules (no `翻譯腔`).
+- [ ] A Vietnamese register file exists, named by `profile.register_hints_file` (a bare filename under `assets/`; zh-tw => `register_hints.json`, vi => `register_hints.vi.json`). It holds at least a literary-fiction and a non-fiction-narrative register with Vietnamese `prefer`/`avoid`/`subagent_rules` and **distinct English register names** (`resolve_register` matches on shared tokens of 2+ characters). `min_length_ratio` is NOT measured or set for `vi` in Phase 2 (Phase 3 owns it). `_load_register_hints`, `resolve_register`, `resolve_register_override`, `resolve_register_rules`, `translation_quality_audit._min_length_ratio_from_book_dir` and `build_subagent_prompt` take a keyword-only `profile=None`; with no profile argument the call path stays exactly as today (including `resolve_register(glossary)` with one argument, which `test_glossary.py:99` monkeypatches). `glossary.REGISTER_HINTS_PATH` stays.
+- [ ] The glossary prompt is built by `build_glossary_prompt(profile=None)` from four named slots in the profile's `glossary_prompt_slots` dict (`target_note`, `name_advice`, `title_rules`, `avoid_example`), substituted with `.replace` before `.format`; slot values carry their own line breaks and contain no braces. `GLOSSARY_PROMPT = build_glossary_prompt(ZH_TW)` is kept and is byte-identical to today (pinned first, see 2.3). The `vi` slots give name handling (keep original spelling) and chapter-title examples such as `Chương 1: …`.
+- [ ] `GENERIC_SUBAGENT_RULES` becomes `list(ZH_TW.generic_rules)`; the profile's `generic_rules` tuple is used when no register matches. zh-tw output unchanged; `vi` gets Vietnamese-appropriate fallback rules (no `翻譯腔`).
 - [ ] The glossary key stays `chapter_titles_zh` (DECISION-002); the glossary prompt text says so in a comment so a reader is not misled.
 
 Behaviour end to end (`vi`)
@@ -77,7 +77,7 @@ Behaviour end to end (`vi`)
 - [ ] An unregistered `target_lang` (e.g. `vn`) raises a clear error in `assemble` and `audit_suite` (Open Question 5); `build_subagent_prompt` keeps the pinned fallback for `zh-cn`/`en`/`ja`/`ko`. A DECISION entry records the final rule and supersedes the "tighten in Phase 2" note in DECISION-006.
 
 Regression and process
-- [ ] All Phase 1 checks still hold: golden and frozen-zh-tw snapshot identical to `bb0eb35`; no existing test file modified (`git diff --diff-filter=MDRT --name-only dac59fe -- test/ conftest.py requirements-dev.txt requirements.txt .github/` prints nothing); scope guard for the ollama/omlx files empty; the Phase 1 grep gate still clean on the zh-tw side.
+- [ ] All Phase 1 checks still hold: golden and frozen-zh-tw snapshot identical to `bb0eb35`. No existing test, config or golden file is modified, with exactly three named carve-outs in `test/test_lang_profile.py` that necessarily change with `vi`: the 13-field assertion (now 17 fields), `get_profile("vi")` raising, and `resolve_profile("vi")` returning zh-tw. Check: `git diff --diff-filter=MDRT --name-only e0f41b6 -- test/ conftest.py requirements-dev.txt requirements.txt .github/` lists only `test/test_lang_profile.py`, and `git diff e0f41b6 -- test/test_lang_profile.py` touches only those three tests. New pins go in new files (`test/golden/derive_phase2.py`, `golden_zh_tw_phase2.json`, `test_zh_tw_phase2_characterization.py`), never in `derive.py`, because `test_golden_covers_expected_groups` fixes the Phase 1 group set. Scope guard for the ollama/omlx files still empty.
 - [ ] CI green (ubuntu 3.10/3.12, windows 3.12).
 - [ ] Ledger updated; any new bug found goes to `docs/BUGS.md`, any tradeoff to `docs/DECISIONS.md`.
 
@@ -90,15 +90,15 @@ Regression and process
 
 ## Program design (sketch; confirm in the Advise call)
 
-- New or changed `LanguageProfile` fields (each needs a reason; none added "just in case"): `register_hints_path` (Open Question 1a), `glossary_prompt_notes` (name-handling advice and chapter-title examples), `generic_rules` (replaces `GENERIC_SUBAGENT_RULES`), and a way to express "apply the Simplified gate" (boolean `simplified_gate`). Four additions to the 13 fields; the Advise call should challenge each.
+- Profile additions (17 fields total, amended after the Fable Advise call): `register_hints_file: str`, `glossary_prompt_slots: dict[str, str]`, `generic_rules: tuple[str, ...]`, `simplified_gate: bool`. Not added: `min_length_ratio` (Phase 3), any capabilities tuple.
 - Call sites: `glossary.py` (`GLOSSARY_PROMPT`, `_load_register_hints`, `resolve_register*`), `dispatch.py` (`GENERIC_SUBAGENT_RULES`, `build_subagent_prompt`), `translation_quality_audit.py` (Simplified gate and `BANNED_PATTERNS` guarded by the profile), `assemble.py` / `audit_suite.py` / `lang_profile.py` (strict lookup), `assets/` (new `register_hints.vi.json`).
 - Layout: single package (`scripts/`) plus one asset file.
 
 ## Sub-tasks
 
 - [x] 2.1 User answers the open questions and reviews the Vietnamese wording; DoD approved (2026-11-11)
-- [ ] 2.2 Advise call for the field changes (log in `docs/eagd-log.md`)
-- [ ] 2.3 Golden group for the zh-tw glossary prompt, generic rules and register-hint rendering, derived from a `dac59fe` worktree
+- [x] 2.2 Advise call done (Fable, one-time override, logged 2026-11-11, `4b176ca`); amendments approved by the user and applied above
+- [ ] 2.3 New golden pins in new files, derived from a worktree of `e0f41b6` (its `scripts/`, `assets/`, `test/` equal `dac59fe` and `bb0eb35` for the pinned files): `GLOSSARY_PROMPT` text and sha plus one `.format` rendering; `_REGISTER_HINTS_BLOCK` and `_load_register_hints()`; `resolve_register`, `resolve_register_override`, `resolve_register_rules` over substring, token-match, unknown, bad `style_anchor`, explicit-hints and id-case samples; `build_subagent_prompt` with each matched register, with `register_override` and with `custom_instructions`; `GENERIC_SUBAGENT_RULES`; `_min_length_ratio_from_book_dir` for the academic register (0.30); the failure strings of `translation_quality_audit.audit()` on a tiny EPUB with a Simplified target.
 - [ ] 2.4 Red tests: `test_lang_profile_vi.py`, then the Vietnamese frozen fixture and its snapshot
 - [ ] 2.5 Add fields and the `vi` profile; refactor the glossary and dispatch pieces; register hints for `vi`
 - [ ] 2.6 Guard the Simplified gate and strict unknown-code handling; DECISION entry
