@@ -48,13 +48,13 @@ D. Mixed text (a single "Nguyễn" in an English paragraph): the plan says the s
 - [x] 3.2 Labelled sample set and vi length ratios (results under "3.2 results" below)
 - [x] 3.3 Advise call on detector + mixed-text rule, logged (answer under "3.3 Advise outcome")
 - [x] 3.4 Red tests, then implement detector (A, D); results under "3.4 results"
-- [ ] 3.5 Echo check (B), with the profile switch
+- [x] 3.5 Echo check (B), for every profile with no profile field (Advise + user, DECISION-011); results under "3.5 results"
 - [ ] 3.6 Ratio per register (C); Advise call if it changes a threshold
 - [ ] 3.7 Coverage-audit pair on the fixture; verify DoD; ledger
 
 ## Open questions for you
 
-1. ~~Echo check field or always on?~~ Answered (user, 2026-11-11): a profile field, `echo_check` (zh-tw False, vi True; 18 fields).
+1. ~~Echo check field or always on?~~ First answered: a profile field. Superseded 2026-11-11 after the 3.5 Advise call: runs for every profile, no field (DECISION-011).
 2. ~~Second real source?~~ Answered: *Subtract* is the test book from here on (Phase 3 ratio measurement and the Phase 5 full run). The Alice frozen fixtures, `runs/alice/` and all their tests/baselines stay unchanged as the committed regression samples.
 3. ~~Mixed-text rule?~~ Answered (user, 2026-11-11): the share rule (option B). For paragraphs >= 50 chars, a minimum share of words must carry a distinctive letter or be a listed function word; cutoff set from labelled data and *Subtract*, not guessed. Shorter paragraphs keep the any-match rule.
 
@@ -95,3 +95,9 @@ Still to do from the advice: the 0.25 cutoff is checked against 11 real paragrap
 - Frozen-fixture snapshots: zh-tw identical to the `bb0eb35` baseline; `vi` identical to `baseline_vi_phase2.json` (the Alice excerpt has no short English source with a Vietnamese name, so nothing moves).
 - Behaviour change worth knowing: `bilingual_coverage_audit.audit()` returns only `(ok, failures)`; short untranslated English (< 50 chars) still goes amber (warning) by design. The change is that a source containing a Vietnamese name is no longer silently exempt. Tests use `_audit_with_warnings` for that.
 - Known remaining weak spots (not fixed): n=11+8 real Vietnamese paragraphs, one translator; a short English sentence whose lowercase words include a function word from the list is a false positive (e.g. "xin" as a typo); lowercase-initial Vietnamese names written without capitals are counted normally.
+
+## 3.5 results (2026-11-11)
+
+- Advise (opus, logged): add the check, no field, every profile; exact equality, hard failure; skip headings, sources < 50 chars and `source_only` exceptions. The user chose this over the earlier field decision (DECISION-011).
+- `test/test_echo_check_phase3.py` (8 tests, 5 red first), then the check in `translation_quality_audit._audit_findings`. Correction to the advice: `_clean` collapses whitespace but does not NFC-normalise, so the comparison normalises explicitly (a decomposed-Unicode echo test failed before that). Suite 626 passed, 269 skipped; existing tests untouched (gate empty); zh-tw and vi frozen snapshots still identical to their baselines.
+- Not checked: `<pre>`/code nodes tagged `src` in a real book (the advice raised it); the exception match is exact on the cleaned text, like the existing source-only branch.

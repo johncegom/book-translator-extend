@@ -6,6 +6,7 @@ import argparse
 import json
 import re
 import sys
+import unicodedata
 from pathlib import Path
 
 from bs4 import BeautifulSoup
@@ -63,6 +64,7 @@ _INDEX_PAGE_REF_RE = re.compile(r",\s*\d")
 _SENTENCE_PUNCTUATION_RE = re.compile(r"[.!?…。！？]+")
 _CLOSING_PUNCTUATION = "\"”’）)]}」』】"
 _SHORT_SOURCE_MAX = 150
+_ECHO_MIN_LENGTH = 50  # same cutoff as the length-ratio check below
 _TITLE_RATIO_MARGIN = 0.04
 _SHORT_SENTENCE_RATIO_MARGIN = 0.02
 
@@ -149,6 +151,16 @@ def _audit_findings(
                         f"{path}: error: target contains Simplified Chinese characters "
                         f"{simplified_chars!r}: {tgt_text[:120]}"
                     )
+                if (
+                    src.name not in HEADING_TAGS
+                    and len(src_text) >= _ECHO_MIN_LENGTH
+                    and unicodedata.normalize("NFC", tgt_text) == unicodedata.normalize("NFC", src_text)
+                    and src_text not in exceptions
+                ):
+                    # The pipeline never writes the source into the target on purpose, so an
+                    # equal pair is a model echo. Applies to every profile (Advise, Phase 3).
+                    hard_target_failure = True
+                    failures.append(f"{path}: target equals source (untranslated): {src_text[:120]}")
                 if contains_model_token_leak(tgt_text):
                     hard_target_failure = True
                     failures.append(f"{path}: model control token leaked: {src_text[:120]}")
