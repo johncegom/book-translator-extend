@@ -85,3 +85,11 @@ Phase 5 is a run, so the checks are commands on the output, plus the existing su
 3. **`Notes` (77,616 characters) and the small tail pages.** Skip translating them (`source_only`)? I lean yes for `Notes`, and for `Image Credits`, "Thank you for buying this" and `Document Outline`; translate the rest.
 4. **Budget and stop rule.** Is the "stop if more than 3 of the first 10 items need escalation" rule right, and is there a quota ceiling at which you want me to pause and ask?
 5. **Reader for the read-back.** Which reader will you open the EPUB in (Calibre, Apple Books, an e-ink device)? Some readers ignore the bilingual styling; I would rather know before I tell you what to look for.
+
+## Answers so far (user, 2026-11-12)
+
+1. **Who drives the run:** (a). Pre-flight here; the user runs the skill in a fresh Claude Code session (this is also the fresh-session check); I do the audits, measurement and write-up afterwards.
+2. **Skill install:** copy this repo's skill into `~/.claude/skills/book-translator/` (checked: no copy exists there today, so nothing is overwritten). Done in 5.2, after approval; `runs/` and `.git` are not copied.
+3. **Tail pages:** `Notes`, `Image Credits`, "Thank you for buying this" and `Document Outline` become `source_only` in the pre-flight; the rest translate.
+4. **Stop rule and quota ceiling:** pending; the user asked for an explanation (given in the conversation).
+5. **Reader:** Kindle (probably Send to Kindle, which converts the EPUB). Check in the read-back that the source and Vietnamese paragraphs both show in order, that Vietnamese diacritics render, and that the table of contents entries for the split chapters work. If Kindle's conversion drops the styling, that is a reader limit to record, not a pipeline failure.
