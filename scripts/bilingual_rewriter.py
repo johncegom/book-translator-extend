@@ -8,52 +8,32 @@ from bs4 import BeautifulSoup
 
 try:  # pragma: no cover - import style depends on caller
     from .content_blocks import walk_text_nodes
+    from .lang_profile import ZH_TW
 except ImportError:  # pragma: no cover
     from content_blocks import walk_text_nodes  # type: ignore
+    from lang_profile import ZH_TW  # type: ignore
 
-# Generic structural labels only. Per-book paragraph overrides belong in
-# <book_dir>/translations_extra.json.
-STRUCTURAL_LABELS_ZH_TW = {
-    "Contents": "目錄",
-    "Introduction": "導論",
-    "PART I": "第一部",
-    "PART II": "第二部",
-    "Acknowledgments": "致謝",
-    "Notes": "註釋",
-    "About the Author": "關於作者",
-    "What’s next on your reading list?": "你的下一本書想讀什麼？",
-    "What's next on your reading list?": "你的下一本書想讀什麼？",
-    "Discover your next great read!": "發現下一本精彩好書！",
-    "Get personalized book picks and up-to-date news about this author.": "取得為你量身推薦的書單，以及這位作者的最新消息。",
-    "Sign up now.": "立即註冊。",
-    "GO TO NOTE REFERENCE IN TEXT": "返回正文註記位置",
-}
-
-# Generic structural contents labels only.
-CONTENTS_LINK_LABELS_ZH_TW = {
-    "Contents": "目錄",
-    "Cover": "封面",
-    "Title Page": "書名頁",
-    "Copyright": "版權頁",
-    "Dedication": "獻辭",
-    "PART I": "第一部",
-    "PART II": "第二部",
-    "Acknowledgments": "致謝",
-    "Notes": "註釋",
-    "About the Author": "關於作者",
-}
+# The zh-tw label tables live in lang_profile; these names stay as aliases (the
+# same dict objects) for existing importers.
+STRUCTURAL_LABELS_ZH_TW = ZH_TW.structural_labels
+CONTENTS_LINK_LABELS_ZH_TW = ZH_TW.contents_labels
 
 
-_AUP_NOTE_HTML_TEMPLATE = (
-    '<div class="aup-refused-note" '
-    'style="border-left: 4px solid #c44; padding: 0.5em 1em; margin: 1em 0; '
-    'background: #fff4f0; font-size: 0.9em;">'
-    '<strong>本章因 LLM 政策拒答，保留原文未譯</strong><br/>'
-    "This chapter was refused by the translation LLM's usage policy; "
-    "the original English is preserved verbatim. "
-    '<em>Reason: {reason}</em>'
-    '</div>'
-)
+def _aup_note_template(notice: str) -> str:
+    """HTML for the AUP-refused note; ``{reason}`` is filled in later."""
+    return (
+        '<div class="aup-refused-note" '
+        'style="border-left: 4px solid #c44; padding: 0.5em 1em; margin: 1em 0; '
+        'background: #fff4f0; font-size: 0.9em;">'
+        '<strong>' + notice + '</strong><br/>'
+        "This chapter was refused by the translation LLM's usage policy; "
+        "the original English is preserved verbatim. "
+        '<em>Reason: {reason}</em>'
+        '</div>'
+    )
+
+
+_AUP_NOTE_HTML_TEMPLATE = _aup_note_template(ZH_TW.aup_refused_notice)
 
 
 def insert_bilingual(
@@ -63,12 +43,14 @@ def insert_bilingual(
     *,
     chapter_status: str | None = None,
     aup_reason: str | None = None,
+    profile=None,
 ) -> tuple[str, list[str]] | str:
     """Per-paragraph interleave src + translation. If chapter_status='aup_refused',
     return source HTML with a visible annotation block prepended; do not insert
     translation siblings."""
+    profile = ZH_TW if profile is None else profile
     if chapter_status == "aup_refused":
-        return _emit_aup_refused_chapter(src_html, aup_reason or "")
+        return _emit_aup_refused_chapter(src_html, aup_reason or "", profile)
     soup = BeautifulSoup(src_html, "html.parser")
     promoted_ids = {id(h) for h in _promote_header_headings(soup)}
     for tag in soup(["script", "style", "nav", "footer"]):
@@ -76,7 +58,7 @@ def insert_bilingual(
     # 內建 contents 連結標籤只在該頁沒有自己的譯文時才補；否則會和逐段譯文
     # 疊成「Dedication ｜ 獻辭」+「獻詞」兩份中文。
     if entry.get("role") == "contents" and entry.get("output_strategy") != "translate":
-        _bilingualize_contents_links(soup)
+        _bilingualize_contents_links(soup, profile)
     nodes = _text_nodes_for_bilingual(soup)
     # Promoted header headings (chapter numbers / part names) were stripped by
     # dispatch's extract_blocks, so no translation segment exists for them. Pair
@@ -84,7 +66,7 @@ def insert_bilingual(
     # nav/structural label (if any) without consuming a body slot.
     body_nodes = [n for n in nodes if id(n) not in promoted_ids]
     warnings: list[str] = []
-    aligned_body = _align_translations(body_nodes, translations, entry)
+    aligned_body = _align_translations(body_nodes, translations, entry, profile)
     if entry.get("output_strategy") == "translate" and len(body_nodes) != len(aligned_body):
         warnings.append(
             f"{entry.get('translation_id') or entry['id']}: paragraph count mismatch "
@@ -104,9 +86,9 @@ def insert_bilingual(
             # override there would duplicate the title that already renders on the
             # separate in-body title heading.
             if _is_bare_chapter_number(source_text):
-                candidate = _exact_translation_for_text(source_text, entry) or None
+                candidate = _exact_translation_for_text(source_text, entry, profile) or None
             else:
-                candidate = _heading_zh_label(source_text, entry) or None
+                candidate = _heading_zh_label(source_text, entry, profile) or None
         else:
             candidate = aligned_body[body_index] if body_index < len(aligned_body) else None
             body_index += 1
@@ -117,23 +99,24 @@ def insert_bilingual(
             translated = str(candidate)
             unpaired = False
         else:
-            translated = _fallback_translation(source_text, entry)
+            translated = _fallback_translation(source_text, entry, profile)
             unpaired = entry.get("output_strategy") == "translate"
         translated = _ensure_han_translation(translated, source_text)
         if not translated:
             continue
         target = soup.new_tag("p")
-        target["class"] = _target_classes(node, unpaired=unpaired)
+        target["class"] = _target_classes(node, unpaired=unpaired, profile=profile)
         target.string = translated
         node.insert_after(target)
     return str(soup), warnings
 
 
-def _emit_aup_refused_chapter(src_html: str, reason: str) -> str:
+def _emit_aup_refused_chapter(src_html: str, reason: str, profile=None) -> str:
     """Inject an AUP-refused notice at the top of <body> and return the result."""
     from bs4 import BeautifulSoup
     safe_reason = (reason or "(no reason recorded)").replace("<", "&lt;").replace(">", "&gt;")
-    note = _AUP_NOTE_HTML_TEMPLATE.format(reason=safe_reason)
+    profile = ZH_TW if profile is None else profile
+    note = _aup_note_template(profile.aup_refused_notice).format(reason=safe_reason)
     soup = BeautifulSoup(src_html, "html.parser")
     body = soup.find("body")
     if body is None:
@@ -174,17 +157,18 @@ def _is_bare_chapter_number(text: str) -> bool:
     )
 
 
-def _bilingualize_contents_links(soup: BeautifulSoup) -> None:
+def _bilingualize_contents_links(soup: BeautifulSoup, profile=None) -> None:
+    profile = ZH_TW if profile is None else profile
     for link in soup.find_all("a"):
         text = _clean_text(link.get_text(" ", strip=True))
         if "｜" in text:
             continue
-        zh = CONTENTS_LINK_LABELS_ZH_TW.get(text)
+        zh = profile.contents_labels.get(text)
         if zh:
             link.string = f"{text} ｜ {zh}"
 
 
-def _align_translations(nodes: list, translations: list[str], entry: dict) -> list[str | None]:
+def _align_translations(nodes: list, translations: list[str], entry: dict, profile=None) -> list[str | None]:
     if entry.get("output_strategy") != "translate":
         return []
     if len(nodes) == len(translations):
@@ -192,9 +176,9 @@ def _align_translations(nodes: list, translations: list[str], entry: dict) -> li
     if len(nodes) == len(translations) + 1 and nodes:
         first = _clean_text(nodes[0].get_text(" ", strip=True))
         if first.lower() in {"introduction", "chapter"}:
-            return [_fallback_translation(first, entry), *translations]
+            return [_fallback_translation(first, entry, profile), *translations]
         if nodes[0].name in {"h1", "h2", "h3", "h4", "h5", "h6"}:
-            zh = _heading_zh_label(first, entry)
+            zh = _heading_zh_label(first, entry, profile)
             if zh and zh != first:
                 return [zh, *translations]
     return list(translations)
@@ -204,8 +188,9 @@ def _text_nodes_for_bilingual(soup: BeautifulSoup) -> list:
     return list(walk_text_nodes(soup))
 
 
-def _target_classes(node, *, unpaired: bool = False) -> list[str]:
-    classes = ["tgt", "tgt-zh"]
+def _target_classes(node, *, unpaired: bool = False, profile=None) -> list[str]:
+    profile = ZH_TW if profile is None else profile
+    classes = ["tgt", profile.target_class]
     for cls in node.get("class", []):
         if cls not in classes and cls != "src":
             classes.append(cls)
@@ -221,19 +206,20 @@ def _add_class(node, cls: str) -> None:
     node["class"] = classes
 
 
-def _fallback_translation(text: str, entry: dict) -> str:
-    exact = _exact_translation_for_text(text, entry)
+def _fallback_translation(text: str, entry: dict, profile=None) -> str:
+    exact = _exact_translation_for_text(text, entry, profile)
     if exact:
         return exact
     return ""
 
 
-def _exact_translation_for_text(text: str, entry: dict) -> str:
+def _exact_translation_for_text(text: str, entry: dict, profile=None) -> str:
+    profile = ZH_TW if profile is None else profile
     extra = _translations_extra_by_exact_text(entry)
     exact = extra.get(text)
     if exact:
         return str(exact)
-    exact = STRUCTURAL_LABELS_ZH_TW.get(text)
+    exact = profile.structural_labels.get(text)
     if exact:
         return exact
     return ""
@@ -268,22 +254,23 @@ def _looks_like_identifier(text: str) -> bool:
     )
 
 
-def _heading_zh_label(first: str, entry: dict) -> str:
+def _heading_zh_label(first: str, entry: dict, profile=None) -> str:
+    profile = ZH_TW if profile is None else profile
     override = _translations_extra_nav_overrides(entry).get(str(entry.get("original_idref") or ""))
     if override:
         return str(override)
-    exact = STRUCTURAL_LABELS_ZH_TW.get(first)
+    exact = profile.structural_labels.get(first)
     if exact:
         return exact
-    contents = CONTENTS_LINK_LABELS_ZH_TW.get(first)
+    contents = profile.contents_labels.get(first)
     if contents:
         return contents
     contents_style = _clean_text(first.replace("\n", " "))
     if contents_style != first:
-        exact = STRUCTURAL_LABELS_ZH_TW.get(contents_style) or CONTENTS_LINK_LABELS_ZH_TW.get(contents_style)
+        exact = profile.structural_labels.get(contents_style) or profile.contents_labels.get(contents_style)
         if exact:
             return exact
-    return _exact_translation_for_text(contents_style, entry) or _fallback_translation(first, entry)
+    return _exact_translation_for_text(contents_style, entry, profile) or _fallback_translation(first, entry, profile)
 
 
 def _translations_extra_nav_overrides(entry: dict) -> dict:
