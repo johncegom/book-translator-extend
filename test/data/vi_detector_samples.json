@@ -1,0 +1,263 @@
+{
+ "provenance": "All samples written by the project (Claude Code session, 2026-11-11) for Phase 3; English lines are paraphrases or short quotes of the public-domain Alice text and the test book's ideas, not copied passages. Vietnamese lines are hand-written, not native-reviewed. expected = the intended is_target_text result under DECISION-010 plus the mixed-text share rule (TASK.md, question 3).",
+ "samples": [
+  {
+   "kind": "vi_long",
+   "text": "Alice bắt đầu thấy rất chán khi cứ ngồi bên chị trên bờ sông mà chẳng có việc gì làm.",
+   "expected": true,
+   "note": ""
+  },
+  {
+   "kind": "vi_long",
+   "text": "Suốt nhiều thập niên sau khi được xây dựng, tuyến cao tốc kéo dài hơn một dặm dọc bờ phía đông thành phố.",
+   "expected": true,
+   "note": ""
+  },
+  {
+   "kind": "vi_long",
+   "text": "Người dân đã lên tiếng. Bà và ủy ban của mình chuyển sang những dự án khác.",
+   "expected": true,
+   "note": ""
+  },
+  {
+   "kind": "vi_long",
+   "text": "Cô đang tự cân nhắc trong đầu xem niềm vui kết một vòng hoa cúc có đáng để đứng dậy đi hái hoa hay không.",
+   "expected": true,
+   "note": ""
+  },
+  {
+   "kind": "vi_long",
+   "text": "Chúng tôi dạo bước trên lối đi bộ rợp bóng cọ và tìm những chú vẹt hoang trong công viên.",
+   "expected": true,
+   "note": ""
+  },
+  {
+   "kind": "vi_short",
+   "text": "Xin chào",
+   "expected": true,
+   "note": "known letters-only false negative; function-word/short rule"
+  },
+  {
+   "kind": "vi_short",
+   "text": "Cảm ơn bạn.",
+   "expected": true,
+   "note": ""
+  },
+  {
+   "kind": "vi_short",
+   "text": "Không.",
+   "expected": true,
+   "note": ""
+  },
+  {
+   "kind": "vi_short",
+   "text": "Được rồi.",
+   "expected": true,
+   "note": ""
+  },
+  {
+   "kind": "vi_short",
+   "text": "Chương 1",
+   "expected": true,
+   "note": "Chương has ư"
+  },
+  {
+   "kind": "vi_short",
+   "text": "Đúng vậy!",
+   "expected": true,
+   "note": ""
+  },
+  {
+   "kind": "en_long",
+   "text": "When my family visited San Francisco, the waterfront was at the top of our to-do list.",
+   "expected": false,
+   "note": ""
+  },
+  {
+   "kind": "en_long",
+   "text": "Alice was beginning to get very tired of sitting by her sister on the bank.",
+   "expected": false,
+   "note": ""
+  },
+  {
+   "kind": "en_long",
+   "text": "Before it was a must-see destination, it was a double-decker concrete highway.",
+   "expected": false,
+   "note": ""
+  },
+  {
+   "kind": "en_long",
+   "text": "The people had spoken, and the commission moved on to other projects that year.",
+   "expected": false,
+   "note": ""
+  },
+  {
+   "kind": "en_long",
+   "text": "She had learned how to get things done as a community organizing housewife.",
+   "expected": false,
+   "note": ""
+  },
+  {
+   "kind": "en_short",
+   "text": "OK.",
+   "expected": false,
+   "note": ""
+  },
+  {
+   "kind": "en_short",
+   "text": "Chapter 1",
+   "expected": false,
+   "note": ""
+  },
+  {
+   "kind": "en_short",
+   "text": "Yes, sir.",
+   "expected": false,
+   "note": ""
+  },
+  {
+   "kind": "en_short",
+   "text": "Contents",
+   "expected": false,
+   "note": ""
+  },
+  {
+   "kind": "en_short",
+   "text": "Well, an earthquake with some help.",
+   "expected": false,
+   "note": ""
+  },
+  {
+   "kind": "en_with_accents",
+   "text": "We stopped at a small café near the harbor, where the crêpe was excellent and the château visible.",
+   "expected": false,
+   "note": "é ê ï ç are shared with French; must not count as Vietnamese"
+  },
+  {
+   "kind": "en_with_accents",
+   "text": "The naïve tourist admired the façade of the old building, a role he had played before.",
+   "expected": false,
+   "note": "é ê ï ç are shared with French; must not count as Vietnamese"
+  },
+  {
+   "kind": "en_with_accents",
+   "text": "Her fiancée ordered a soufflé and a glass of rosé at the restaurant on the corner.",
+   "expected": false,
+   "note": "é ê ï ç are shared with French; must not count as Vietnamese"
+  },
+  {
+   "kind": "fr",
+   "text": "Quand ma famille a visité San Francisco, le front de mer était en tête de notre liste.",
+   "expected": false,
+   "note": ""
+  },
+  {
+   "kind": "fr",
+   "text": "Il avait fallu un tremblement de terre pour créer cet endroit inoubliable, où nous avons dîné.",
+   "expected": false,
+   "note": ""
+  },
+  {
+   "kind": "fr",
+   "text": "Les électeurs ont rejeté la proposition par peur du changement et de la circulation.",
+   "expected": false,
+   "note": ""
+  },
+  {
+   "kind": "pt",
+   "text": "Quando a minha família visitou São Francisco, a orla era a primeira da lista de passeios.",
+   "expected": false,
+   "note": "ã õ ç á é are shared with Vietnamese letters but are not distinctive"
+  },
+  {
+   "kind": "pt",
+   "text": "Foi preciso um terremoto para criar esse lugar inesquecível, com a ajuda de uma mulher.",
+   "expected": false,
+   "note": "ã õ ç á é are shared with Vietnamese letters but are not distinctive"
+  },
+  {
+   "kind": "pt",
+   "text": "Os eleitores rejeitaram a proposta por medo do trânsito e da perda de negócios.",
+   "expected": false,
+   "note": "ã õ ç á é are shared with Vietnamese letters but are not distinctive"
+  },
+  {
+   "kind": "mixed_en_with_vi_name",
+   "text": "Nguyễn walked into the room and sat down quietly by the window, thinking about the long day.",
+   "expected": false,
+   "note": "share rule: one Vietnamese word in a long English paragraph must not pass"
+  },
+  {
+   "kind": "mixed_en_with_vi_name",
+   "text": "The restaurant owner, Phạm Văn Đức, welcomed every guest at the door and showed them to a table.",
+   "expected": false,
+   "note": "share rule: one Vietnamese word in a long English paragraph must not pass"
+  },
+  {
+   "kind": "mixed_en_with_vi_name",
+   "text": "Thanks to the Đà Nẵng office, the project shipped on time and under budget this quarter.",
+   "expected": false,
+   "note": "share rule: one Vietnamese word in a long English paragraph must not pass"
+  },
+  {
+   "kind": "mixed_vi_with_en_term",
+   "text": "Sue Bierman và ủy ban của bà tiếp tục làm việc với Embarcadero Freeway suốt nhiều năm.",
+   "expected": true,
+   "note": ""
+  },
+  {
+   "kind": "mixed_vi_with_en_term",
+   "text": "Họ xem trận World Series trên tivi thì cảm nhận được trận động đất.",
+   "expected": true,
+   "note": ""
+  },
+  {
+   "kind": "edge",
+   "text": "",
+   "expected": false,
+   "note": ""
+  },
+  {
+   "kind": "edge",
+   "text": "   ",
+   "expected": false,
+   "note": ""
+  },
+  {
+   "kind": "edge",
+   "text": "1234 — 5678",
+   "expected": false,
+   "note": ""
+  },
+  {
+   "kind": "edge_nfd",
+   "text": "Người dân đã lên tiếng.",
+   "expected": true,
+   "note": "decomposed input must be NFC-normalised"
+  },
+  {
+   "kind": "vi_no_distinctive_letter",
+   "text": "Tôi không.",
+   "expected": true,
+   "note": "short Vietnamese with only shared letters (ô à ó ê); needs the function-word list (không, và, tôi, xin, chào, em). 50+ char real Vietnamese always has tone-stacked letters (word share 0.45-0.79 in samples)"
+  },
+  {
+   "kind": "vi_no_distinctive_letter",
+   "text": "Tôi và em.",
+   "expected": true,
+   "note": "short Vietnamese with only shared letters (ô à ó ê); needs the function-word list (không, và, tôi, xin, chào, em). 50+ char real Vietnamese always has tone-stacked letters (word share 0.45-0.79 in samples)"
+  },
+  {
+   "kind": "vi_no_distinctive_letter",
+   "text": "Xin chào.",
+   "expected": true,
+   "note": "short Vietnamese with only shared letters (ô à ó ê); needs the function-word list (không, và, tôi, xin, chào, em). 50+ char real Vietnamese always has tone-stacked letters (word share 0.45-0.79 in samples)"
+  },
+  {
+   "kind": "vi_no_distinctive_letter",
+   "text": "Không có tôi.",
+   "expected": true,
+   "note": "short Vietnamese with only shared letters (ô à ó ê); needs the function-word list (không, và, tôi, xin, chào, em). 50+ char real Vietnamese always has tone-stacked letters (word share 0.45-0.79 in samples)"
+  }
+ ]
+}

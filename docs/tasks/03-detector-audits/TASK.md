@@ -45,7 +45,7 @@ D. Mixed text (a single "Nguyễn" in an English paragraph): the plan says the s
 ## Sub-tasks
 
 - [x] 3.1 User approved this DoD and Test Plan (2026-11-11; open questions answered)
-- [ ] 3.2 Build the labelled sample set; measure vi length ratios
+- [x] 3.2 Labelled sample set and vi length ratios (results under "3.2 results" below)
 - [ ] 3.3 Advise call on detector + mixed-text rule; log it
 - [ ] 3.4 Red tests, then implement detector (A, D)
 - [ ] 3.5 Echo check (B), with the profile switch
@@ -57,3 +57,21 @@ D. Mixed text (a single "Nguyễn" in an English paragraph): the plan says the s
 1. ~~Echo check field or always on?~~ Answered (user, 2026-11-11): a profile field, `echo_check` (zh-tw False, vi True; 18 fields).
 2. ~~Second real source?~~ Answered: *Subtract* is the test book from here on (Phase 3 ratio measurement and the Phase 5 full run). The Alice frozen fixtures, `runs/alice/` and all their tests/baselines stay unchanged as the committed regression samples.
 3. ~~Mixed-text rule?~~ Answered (user, 2026-11-11): the share rule (option B). For paragraphs >= 50 chars, a minimum share of words must carry a distinctive letter or be a listed function word; cutoff set from labelled data and *Subtract*, not guessed. Shorter paragraphs keep the any-match rule.
+
+## 3.2 results (2026-11-11)
+
+**Samples:** `test/data/vi_detector_samples.json`, 43 items (vi long/short/no-distinctive-letter, en long/short/with French accents, fr, pt, mixed English+Vietnamese name, mixed Vietnamese+English term, empty/ASCII, NFD input). Written by the project, not native-reviewed; provenance is in the file. `expected` is the intended result under DECISION-010 plus the share rule.
+
+**Findings that shape 3.3/3.4**
+1. Word share (words containing a distinctive letter / all words), paragraphs >= 50 chars: real Vietnamese 0.45-0.79 (11 paragraphs, incl. 5 Alice); English, French, Portuguese 0.00; English with a Vietnamese name 0.06-0.17. A cutoff near 0.25 separates them with wide margin on this small set. Final value to be fixed in the Advise call (3.3).
+2. The function-word list matters only for short text. Common function words in the DECISION-010 example (của, những, được) already contain distinctive letters; only words such as và, không, tôi, xin, chào, em need the list. Real 50+ char Vietnamese always has tone-stacked letters.
+3. *Subtract* comes from `pdftohtml`: paragraphs are split at page breaks mid-sentence and carry double spaces (e.g. spine item 2, elements 40-42). Whole-book pairing by paragraph would be noisy; not a Phase 3 problem, relevant to Phase 5 together with BUG-001.
+
+**Length ratios (vi chars / en chars, paragraphs >= 50 chars, hand-written translations):**
+
+| Source | n | min | mean | max |
+|---|---|---|---|---|
+| Alice (fixture, fiction) | 8 | 0.80 | 0.87 | 0.94 |
+| *Subtract* (excerpt, non-fiction; Introduction paragraphs 35, 38, 39, 43, 45, 46, 57, 58) | 8 | 0.91 | 1.01 | 1.16 |
+
+The Subtract text and translations stay in `runs/subtract/` (gitignored, copyrighted); only these numbers are committed (`runs/subtract/measure_ratio.py` reproduces them locally). zh-tw's 0.22 default is far below both: a Vietnamese paragraph at 0.3 would pass today. Threshold choice is for 3.6. Caveat: n=16, one translator.
