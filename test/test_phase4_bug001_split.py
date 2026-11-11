@@ -172,3 +172,31 @@ def test_default_threshold_keeps_ordinary_chapter_files_whole():
     source = (Path(extract_epub.__file__)).read_text(encoding="utf-8")
     default = int(re.search(r"^_SPLIT_MIN_CHARS = (\d+)$", source, re.M).group(1))
     assert default >= 50_000      # Alice's largest file is about 30k characters
+
+
+# --- BUG-006: a source_only segment of a split file is exempted per segment ----------------
+
+@pytest.mark.parametrize("frag, name", [("p1", "Alpha"), ("p2", "Bravo"), ("p3", "Charlie")])
+def test_source_only_segment_of_a_split_file_gets_its_exceptions(tmp_path, frag, name):
+    # The segment that is source_only may sit first, in the middle or last: the exemption
+    # follows the segment, not whichever entry happens to be last for the file.
+    book, m = _extract(tmp_path, points=THREE)
+    seg = [e for e in m["spine"] if e.get("fragment_id") == frag][0]
+    seg["output_strategy"] = "source_only"
+    m["chapters"] = [c for c in m.get("chapters", []) if c.get("spine_id") != seg["id"]]
+    (book / "manifest.json").write_text(json.dumps(m), encoding="utf-8")
+    _translate_all(book, m)
+    state = json.loads((book / "state.json").read_text(encoding="utf-8"))
+    state["chapters"][seg["id"]] = {"output_strategy": "source_only", "status": "source_ready"}
+    (book / "state.json").write_text(json.dumps(state), encoding="utf-8")
+
+    out = tmp_path / "out.epub"
+    assemble.assemble(book, out)
+    with zipfile.ZipFile(out) as z:
+        exceptions = json.loads(z.read("OEBPS/translations/source_only.json").decode("utf-8"))
+    texts = {x["src_text"]: x["reason"] for x in exceptions}
+    assert _para(name, 1) in texts and _para(name, 2) in texts
+    assert texts[_para(name, 1)].startswith("manifest_source_only:")
+    for other in CH:
+        if other != name:
+            assert _para(other, 1) not in texts and _para(other, 2) not in texts
