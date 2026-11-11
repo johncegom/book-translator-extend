@@ -1,6 +1,6 @@
 # Task: Phase 1 — Language profile with zh-tw only
 
-Status: not started. Rewritten 2026-11-11 after a Fable review (19 findings, verdict "approve with changes"). Awaiting user approval of this DoD. Call Advise once for the whole Phase 1 field set before 1.2 (CLAUDE.md).
+Status: in progress (1.1a done). DoD approved by the user 2026-11-11, after a Fable review (19 findings, verdict "approve with changes") was folded in. Call Advise once for the whole Phase 1 field set before 1.2 (CLAUDE.md).
 
 Oracle: `main` at `bb0eb35`. Derive every golden value from a worktree of that commit (`git worktree add ../bt-oracle bb0eb35`), never from memory.
 
