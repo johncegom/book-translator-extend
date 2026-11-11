@@ -2,7 +2,7 @@
 
 Test book: *Subtract* (user, 2026-11-11). Alice fixtures are kept as-is.
 
-Status: approved 2026-11-11; in progress (3.2).
+Status: 3.1-3.7 done; waiting for a PR and CI (DoD last item).
 
 Depends on: Phase 2 (merged, PR #6, `71dc493`). Plan: `docs/plans/2026-11-11-vietnamese-language-profile.md`. Decisions to honour: DECISION-003 (50-char rule, echo check, ratio), DECISION-010 (letters plus function words; supersedes the letter rule in 003).
 
@@ -25,15 +25,15 @@ B. Echo check: in `translation_quality_audit`, when a profile sets `echo_check=T
 C. Length ratio: measure English→Vietnamese ratios on *Subtract* (Leidy Klotz, non-fiction narrative; local copy `runs/subtract/subtract.epub`, gitignored, copyrighted so never committed) and cross-check against the existing Alice fixture (fiction). *Subtract* extracts as 3 huge multi-chapter items (BUG-001), so use hand-picked excerpts (Introduction, chapters 1-2) as the Alice fixture does, not whole items; then set `min_length_ratio` in `register_hints.vi.json` per register (not a profile field; the existing mechanism already reads it).
 D. Mixed text (a single "Nguyễn" in an English paragraph): the plan says the sibling must be Vietnamese, not merely contain a Vietnamese word. Proposed rule, to be confirmed in the Advise call: for paragraphs >= 50 chars, count as Vietnamese only if distinctive letters or function words make up a minimum share of the words (threshold from labelled data); below 50 chars keep the any-match rule.
 
-## Definition of Done (draft)
+## Definition of Done
 
-- [ ] Labelled sample set (>= 40 items: vi, fr, pt, en, mixed, short) committed as test data, with the source of each sample stated. Tests written first and seen red.
-- [ ] `vi` `is_target_text`: true for vi samples incl. "Xin chào", false for en/fr/pt samples incl. "café", "crêpe", "façade". Mixed-text rule pinned by tests as decided in D.
-- [ ] Echo check: audit fails an identical-to-source `tgt-vi` paragraph (>= 50 chars) and passes a real translation; zh-tw golden failure strings unchanged.
-- [ ] `min_length_ratio` for each `vi` register set from measured data, with the measurement recorded in this doc; audit fails a truncated Vietnamese paragraph and passes the fixture.
-- [ ] Coverage audit: fails a chapter left untranslated on purpose and passes a translated one (plan "done when"), asserted on the Vietnamese frozen fixture.
-- [ ] Advise called before changing `is_target_text` and before setting the ratio/echo rules (CLAUDE.md triggers); calls logged in `docs/eagd-log.md`.
-- [ ] Regression: all existing tests untouched and green; zh-tw frozen snapshot identical to the `bb0eb35` baseline; `vi` fixture snapshot differs only where intended and the diff is explained here.
+- [x] Labelled sample set (>= 40 items: vi, fr, pt, en, mixed, short) committed as test data, with the source of each sample stated. Tests written first and seen red. **Done:** 43 samples, `test/data/vi_detector_samples.json`; tests written first (25 red).
+- [x] `vi` `is_target_text`: true for vi samples incl. "Xin chào", false for en/fr/pt samples incl. "café", "crêpe", "façade". Mixed-text rule pinned by tests as decided in D. **Done:** rule in 3.3 Advise outcome; `test/test_vi_detector_phase3.py`, 71 tests.
+- [x] Echo check: audit fails an identical-to-source `tgt-vi` paragraph (>= 50 chars) and passes a real translation; zh-tw golden failure strings unchanged. **Done:** all profiles, no field (DECISION-011); `test/test_echo_check_phase3.py`, 8 tests; zh-tw golden strings unchanged.
+- [x] `min_length_ratio` for each `vi` register set from measured data, with the measurement recorded in this doc; audit fails a truncated Vietnamese paragraph and passes the fixture. **Done:** flat 0.60 (DECISION-012); `test/test_vi_length_ratio_phase3.py`; measurements in 3.2 results.
+- [x] Coverage audit: fails a chapter left untranslated on purpose and passes a translated one (plan "done when"), asserted on the Vietnamese frozen fixture. **Done:** on the `vi` frozen fixture the coverage audit fails only the 10 chapters left untranslated (h-3 to h-12) and passes the title page and chapters 1-2 (snapshot `audit_output`, identical before and after Phase 3); the tiny-EPUB pair is also in `test_lang_profile_vi.py` and the new tests.
+- [x] Advise called before changing `is_target_text` and before setting the ratio/echo rules (CLAUDE.md triggers); calls logged in `docs/eagd-log.md`. **Done:** three calls logged: detector (opus), echo (opus), ratio (Fable, one-time user override).
+- [x] Regression: all existing tests untouched and green; zh-tw frozen snapshot identical to the `bb0eb35` baseline; `vi` fixture snapshot differs only where intended and the diff is explained here. **Done:** 626 -> 634 passed, 269 skipped; existing-test gate empty; zh-tw and vi snapshots identical to `bb0eb35` / `baseline_vi_phase2.json`, so there is no vi diff to explain.
 - [ ] CI green (ubuntu 3.10/3.12, windows 3.12). Ledger updated; tradeoffs to `docs/DECISIONS.md`, defects to `docs/BUGS.md`.
 
 ## Test Plan
@@ -50,7 +50,7 @@ D. Mixed text (a single "Nguyễn" in an English paragraph): the plan says the s
 - [x] 3.4 Red tests, then implement detector (A, D); results under "3.4 results"
 - [x] 3.5 Echo check (B), for every profile with no profile field (Advise + user, DECISION-011); results under "3.5 results"
 - [x] 3.6 Ratio per register (C), after an Advise call; results under "3.6 results"
-- [ ] 3.7 Coverage-audit pair on the fixture; verify DoD; ledger
+- [x] 3.7 Coverage-audit pair on the fixture; DoD verified except CI (needs a PR); ledger updated
 
 ## Open questions for you
 
