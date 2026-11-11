@@ -25,13 +25,16 @@ FONT_MEDIA_TYPES = {
 XHTML_MEDIA_TYPE = "application/xhtml+xml"
 
 try:  # pragma: no cover - import style depends on caller
+    from .lang_profile import ZH_TW
     from .manifest import entry_original_path
 except ImportError:  # pragma: no cover
+    from lang_profile import ZH_TW  # type: ignore
     from manifest import entry_original_path  # type: ignore
 
 
-def build_minimal_opf(manifest: dict, entries: list[dict], opf_path: str, nav_path: str | None) -> str:
+def build_minimal_opf(manifest: dict, entries: list[dict], opf_path: str, nav_path: str | None, profile=None) -> str:
     """Generate a minimal OPF for the standalone archive path."""
+    profile = ZH_TW if profile is None else profile
     opf_dir = posixpath.dirname(opf_path)
     manifest_items: list[str] = []
     spine_items: list[str] = []
@@ -53,7 +56,7 @@ def build_minimal_opf(manifest: dict, entries: list[dict], opf_path: str, nav_pa
   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
     <dc:identifier id="bookid">{identifier}</dc:identifier>
     <dc:title>{title}</dc:title>
-    <dc:language>zh-Hant</dc:language>
+    <dc:language>{profile.html_lang}</dc:language>
   </metadata>
   <manifest>
 {chr(10).join(manifest_items)}
