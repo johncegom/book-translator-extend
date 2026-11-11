@@ -42,7 +42,12 @@ Behaviour
 Plumbing
 - [ ] `assemble` and `audit_suite.run_all` read `target_lang` from `<book_dir>/state.json`; a missing file or key means `zh-tw`. Each audit's `run`/`audit` gains an optional `profile` argument defaulting to zh-tw; CLI flags unchanged.
 - [ ] `get_profile(code)` is registered for `zh-tw` only; `get_profile` on an unknown code raises (this does not affect `_target_long`, which keeps its own fallback).
-- [ ] `LanguageProfile` has only the fields zh-tw needs in Phase 1: `code`, `long_name`, `target_class`, `structural_labels`, `contents_labels`, `prefix_labels`, `prompt_rules`, `is_target_text`. Other fields wait for Phase 2/3.
+- [ ] `LanguageProfile` (frozen dataclass, plain dict fields) has exactly these 13 fields in Phase 1 (amended 2026-11-11 after a Fable Advise call, user-approved): `code`, `long_name`, `html_lang` (`zh-Hant`; `nav_builder`, `opf_builder`), `target_class` (`tgt-zh`; `bilingual_rewriter`), `structural_labels`, `contents_labels`, `prefix_labels`, `footnote_label` (`註腳 {n}`), `bilingual_edition_label` (`中英對照`), `aup_refused_notice` (the sentence only), `prompt_rules`, `default_custom_instructions`, `is_target_text` (a callable field). Other fields wait for Phase 2/3. Profiles are compared by `.code`, never by identity or `==`.
+- [ ] `resolve_profile(code)` casefolds and falls back to zh-tw for any unregistered code; `build_subagent_prompt` and `assemble` use it, so the pinned `zh-cn` / `en` prompt output is unchanged. A DECISION entry records the fallback (to be tightened in Phase 2).
+- [ ] Guard test in `test/test_lang_profile.py`: a sentinel profile built with `dataclasses.replace(ZH_TW, ...)` (no Han, no `zh-Hant`, class `tgt-sentinel`) is passed to `insert_bilingual`, `build_nav_xhtml`, the OPF builder and both audits; the output contains no Han, `zh-Hant` or `tgt-zh`. Any helper that silently falls back to zh-tw fails the test.
+- [ ] `is_target_text` replaces the three checks over U+4E00–U+9FFF: `paragraph_classification.py:13`, `translation_quality_audit.py:75` (`_contains_han`) and `assemble.py:280`, plus their coverage-audit uses. `translation_quality_audit.py:58` (adds U+3400–4DBF) and the Simplified gate stay.
+- [ ] `_AUP_NOTE_HTML_TEMPLATE` is built by concatenation so `{reason}` survives the move (pinned in the golden file).
+- [ ] Grep-gate allow-list (recorded in Notes): `未命名` (`nav_builder._nav_label`, no production caller), the glossary prompt fragments (`glossary.py:62-83`), `GENERIC_SUBAGENT_RULES` (`dispatch.py:95`), `format_fixed_terms` (`dispatch.py:285`, ollama path), the assemble error text and the `bilingual_coverage_audit.py:73` message (no Han), the `｜` separator, and the two `\u` escapes the gate cannot see (`paragraph_classification.py:13`, `translation_quality_audit.py:58`; checked by hand).
 
 ## Test Plan
 - Unit/characterization: existing suite plus `test/golden/` (derive first, then write the test, then implement; see CLAUDE.md, Ground-truth TDD).
@@ -56,7 +61,7 @@ Plumbing
 
 ## Program design
 Fill because the change touches many files whose interaction is not obvious.
-- Types/interfaces: `LanguageProfile` frozen dataclass; `get_profile(code)`. Decide before 1.2: helpers take an optional `profile` argument defaulting to zh-tw (chosen, to keep direct test calls working); entry points resolve the profile once from `state.json` and pass it down.
+- Types/interfaces: `LanguageProfile` frozen dataclass; `get_profile(code)` (strict, raises on unknown); `resolve_profile(code)` (casefolds, falls back to zh-tw); `ZH_TW`. Decide before 1.2: helpers take an optional `profile` argument defaulting to zh-tw (chosen, to keep direct test calls working); entry points resolve the profile once from `state.json` and pass it down.
 - Call sites (`path:line` from the review of `bb0eb35`):
   - `paragraph_classification.py:13,28,98`: Han predicate (U+4E00–9FFF).
   - `bilingual_rewriter.py:17-43` (label tables), `:51` (AUP note), `:208` (`["tgt", "tgt-zh"]`).
