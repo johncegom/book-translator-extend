@@ -1,6 +1,6 @@
 # Task: Phase 2 — Vietnamese profile (`vi`)
 
-Status: DRAFT 2026-11-11, awaiting user approval of the DoD and of the open questions below. Nothing is implemented. Call Advise (once, for the new field set) before changing `LanguageProfile`.
+Status: DRAFT 2026-11-11. Questions 1, 3, 4, 5 decided; question 2 (wording) still open. DoD not yet approved. Nothing is implemented. Call Advise (once, for the new field set) before changing `LanguageProfile`.
 
 Depends on: Phase 1 (merged, PR #4). Plan: `docs/plans/2026-11-11-vietnamese-language-profile.md`. Decisions to honour: DECISION-002 (keep the `chapter_titles_zh` key), DECISION-006 (tighten `resolve_profile`), DECISION-007 (profile shape).
 
@@ -17,13 +17,13 @@ A registered `vi` profile so that, with `target_lang: "vi"` in `state.json`, the
 5. **The detector for `vi` cannot reuse a script test.** The plan's rule: a paragraph counts as Vietnamese when it contains Vietnamese-only letters (ă â đ ê ô ơ ư or tone-marked vowels). Phase 2 needs a working `is_target_text` to construct the profile and to keep assemble from misclassifying English; Phase 3 pins the thresholds, the echo check and the audit behaviour.
 6. **Out of scope and unchanged:** the ollama/omlx/cloud paths, `translate_chapter_cli.py`, `offline_postprocess.py` (opencc), `build_terms.py` (decide below), the Simplified-Chinese gate (a no-op for `vi` by construction, see DoD).
 
-## Open questions for the user (please answer before approving)
+## Decisions on the open questions (user, 2026-11-11)
 
-1. **Register hints design.** Options: (a) a second file `assets/register_hints.vi.json` and a profile field naming the file; (b) one file with per-language entries (`"vi": {...}` inside each register); (c) no register hints for `vi` in Phase 2, use only the profile's generic rules. I recommend (a): smallest diff, no change to the zh-tw file, mirrors how a third language would be added.
-2. **Vietnamese wording.** I drafted the label tables below; you are the native reviewer. Please correct them in this document before approval. Especially: `Introduction` (Giới thiệu vs Lời nói đầu), `Title Page` (Trang tựa vs Trang nhan đề), `Praise for` (Lời khen ngợi vs Lời tán dương) and the chapter-title style (`Chương I` / `Chương 1`).
-3. **Personal and place names.** Plan says keep personal names in original spelling. For places with established Vietnamese forms (e.g. Luân Đôn, Pa-ri) should the model use the Vietnamese form, or always keep the original? Draft below: keep original, allow established forms listed in the glossary only.
-4. **`build_terms.py`** (common-word triage with `wordfreq`, flags Simplified characters via opencc). Is it on the Claude Code subagent path you use? If yes it becomes a call site in this phase; if no it stays out of scope.
-5. **Strictness for unknown codes.** Proposal: `assemble`, `audit_suite` and the `state.json` reader raise a clear error for a `target_lang` that has no profile (e.g. `vn`), except that the historical codes `zh-cn`, `en`, `ja`, `ko` keep their pinned prompt behaviour in `build_subagent_prompt` only. OK?
+1. **Register hints: decided, option (a).** A second file `assets/register_hints.vi.json` plus a profile field naming it. The zh-tw file stays untouched.
+2. **Vietnamese wording: open.** The first sample EPUB (Bố Già) was a 600-character landing page with no structural labels, so nothing was usable. A second sample (`Kinh Doanh Nhỏ Thu Lợi Lớn`, Alpha Books, 2013) has real structure; candidate terms from it are listed in the chat and need the author's yes/no before use. Until then the draft table below is unreviewed.
+3. **Names: decided.** Keep the original spelling of personal and place names; no Vietnamese forms (no Luân Đôn / Pa-ri) unless the glossary supplies one.
+4. **`build_terms.py`: out of scope for Phase 2 (accepted).** It is an optional term-review step whose OpenCC/Simplified check is mandatory and zh-only. Phase 4 must make `SKILL.md` say the step is not available for `vi` and must not let a Vietnamese run hit the OpenCC `RuntimeError`.
+5. **Unknown codes: decided.** `assemble` and `audit_suite` (and the `state.json` reader) raise a clear error for a `target_lang` with no profile (e.g. `vn`). `build_subagent_prompt` keeps the pinned fallback for `zh-cn`, `en`, `ja`, `ko`.
 
 ## Draft Vietnamese data (for your review)
 
