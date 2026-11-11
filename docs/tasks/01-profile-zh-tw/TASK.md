@@ -1,6 +1,6 @@
 # Task: Phase 1 — Language profile with zh-tw only
 
-Status: in progress (1.1a done). DoD approved by the user 2026-11-11, after a Fable review (19 findings, verdict "approve with changes") was folded in. Call Advise once for the whole Phase 1 field set before 1.2 (CLAUDE.md).
+Status: in progress (1.1a, 1.1b done; next 1.2). DoD approved by the user 2026-11-11, after a Fable review (19 findings, verdict "approve with changes") was folded in. Call Advise once for the whole Phase 1 field set before 1.2 (CLAUDE.md).
 
 Oracle: `main` at `bb0eb35`. Derive every golden value from a worktree of that commit (`git worktree add ../bt-oracle bb0eb35`), never from memory.
 
@@ -73,7 +73,7 @@ Fill because the change touches many files whose interaction is not obvious.
 ## Sub-tasks
 Conversion order is leaf first because `nav_builder` imports the rewriter's tables and `assemble` re-exports both. One commit per file; after each, run `pytest -q` and the frozen-book comparison. Open a draft PR after 1.2 so CI runs on every commit.
 - [x] 1.1a Frozen zh-tw fixture built (option A, hand-written translations) and baseline recorded; see Notes. Files: `docs/tasks/01-profile-zh-tw/frozen-fixture/`
-- [ ] 1.1b Derive golden cases from the `bb0eb35` worktree and commit the characterization tests green before any code change
+- [x] 1.1b Golden cases derived from the `bb0eb35` worktree; characterization tests committed green before any code change
 - [ ] 1.2 Advise call for the Phase 1 field set; add `lang_profile.py` and the zh-tw profile (profile-API tests committed first, red)
 - [ ] 1.3 Convert consumers in this order: `paragraph_classification` → `bilingual_rewriter` → `nav_builder` → `opf_builder` → `assemble` → `bilingual_coverage_audit` and `translation_quality_audit` → `dispatch` (`build_subagent_prompt` only) → `glossary`
 - [ ] 1.4 Verify the DoD (diff checks, grep gate, hashes, scope guard, CI green); update `docs/LEDGER.md`
@@ -85,3 +85,7 @@ Conversion order is leaf first because `nav_builder` imports the rewriter's tabl
   - `python docs/tasks/01-profile-zh-tw/frozen-fixture/snapshot.py runs/alice/frozen runs/alice/alice.epub <snapshot.json>`
   - Baseline (code identical to `bb0eb35`; `git diff bb0eb35 -- scripts` was empty): 22 zip members, audit_suite exit 1. Two runs on unchanged code produced byte-identical snapshots, so the comparison is stable. Local copy at `runs/alice/baseline_bb0eb35.json` (gitignored).
   - The audit FAILs by design on this excerpt: `bilingual_coverage` reports the 10 untranslated chapters still carried in the output (about 600 lines), while `structural`, `translation_quality` and `href_resolve` PASS and the three translated items raise no coverage findings. That gives both a negative and a positive path; any change in that text is a regression signal.
+- 1.1b (done): `test/golden/derive.py` computes the zh-tw values; `golden_zh_tw.json` is its output run inside a worktree of `bb0eb35` (`git worktree add ../bt-oracle bb0eb35`, then `python <repo>/test/golden/derive.py > <repo>/test/golden/golden_zh_tw.json`). `test_zh_tw_characterization.py` recomputes on the current code and compares group by group (9 groups: tables, target_long, han, paragraph, untranslated_reason, nav, rewriter, audit, prompt).
+  - Verified: the 11 golden tests pass in the `bb0eb35` worktree and on this branch; `pytest -q --ignore=test/golden` is still 438 passed, 269 skipped; the DoD `--diff-filter=MDRT` check prints nothing. Mutation checks: changing a label (`Cover`) or shrinking the Han range by one code point (`鿿` to `鿾`) fails the `tables`/`nav` and `han` groups respectively.
+  - Known gaps, deliberate: (1) the `assemble.py:280` Han regex is local to a function, so it is pinned only by the frozen-book snapshot; (2) `assets/register_hints.json` has one register with `min_length_ratio` (0.22), equal to the default, so a differing glossary override value cannot be pinned without changing assets; the ratio parameter itself is pinned at 0.22 and 0.3 in `reviewable_short_target`; (3) the frozen snapshot's 600-line coverage output also guards the audit text.
+  - Keep the `../bt-oracle` worktree until Phase 1 is done, to re-derive if a golden test is ever questioned. Never regenerate the JSON from refactored code.
