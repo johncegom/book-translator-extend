@@ -1,6 +1,6 @@
 # Task: Phase 5 — One full book (*Subtract* by Leidy Klotz, English to Vietnamese)
 
-Status: DRAFT, awaiting user approval of the Definition of Done and Test Plan, and answers to the open questions at the end.
+Status: in progress. DoD and Test Plan approved by the user 2026-11-12 (with the answers at the end; the quota check is the `quota-guard` mod, built in 5.2).
 
 Depends on: Phase 4 (merged; PRs #9 and #11). Plan: `docs/plans/2026-11-11-vietnamese-language-profile.md` ("Phase 5: run the whole pipeline on the test book, open the result in a reader, check one early and one late chapter; done when all four audits pass and the read-back looks right"). The book is copyrighted and local only (`runs/subtract/`, gitignored). The Alice fixtures stay as the committed regression samples.
 
@@ -18,6 +18,8 @@ That the `vi` pipeline works on a real, full-length book, end to end, through th
 6. EAGD (CLAUDE.md): Grade runs once per finished chapter batch (haiku, rubric a to e), Dream after a Grade pass writes `docs/eagd-lessons.md` (haiku). Advise is required before any change to a detector rule or threshold.
 
 ## Proposed scope and order
+
+A0. **Quota guard (built before the pre-flight).** `tools/quota-guard/` mod plus install scripts and tests; the user installs it in the session that runs the translation.
 
 A. **Pre-flight (no translation cost).** Extract (already done, redo from the committed code); review the 23 items and fix the classification by editing `manifest.json` (not code): `Notes` to `source_only` if the user agrees (open question 2); confirm `PART` pages and front matter. Write `state.json` with `target_lang: vi` through `state.init_state`. Fresh `glossary.json` for the `vi` profile (register chosen from the three vi registers; check that `resolve_register` matches, BUG-002 is fixed so a miss now gets 0.60 anyway).
 
@@ -37,6 +39,7 @@ H. **Fresh-session check (moved here from Phase 4).** The user runs the skill on
 
 ## Definition of Done (draft)
 
+- [ ] `quota-guard` mod committed with tests (`claude plugin test tools/quota-guard`, 6 pass), validated, install and uninstall smoke-tested in an isolated config dir; installed by the user in the translation session.
 - [ ] Pre-flight recorded: item list with the final classification of every item; `state.json` has `target_lang: vi`; glossary resolves to a vi register.
 - [ ] Style sample approved by the user (tone gate).
 - [ ] Every `translate` item is `done` in `state.json`, or listed here with a reason (`failed`, `aup_refused`) and the user's decision on each. No item `pending` or `in_progress`.
@@ -52,6 +55,7 @@ H. **Fresh-session check (moved here from Phase 4).** The user runs the skill on
 
 Phase 5 is a run, so the checks are commands on the output, plus the existing suite:
 
+0. `claude plugin validate tools/quota-guard` and `claude plugin test tools/quota-guard` pass (these TypeScript tests are not in CI; CI runs pytest only).
 1. `pytest -q` stays green before and after (no code change is planned; any fix found gets its own test-first change and PR).
 2. Pre-flight: `python scripts/extract_epub.py runs/subtract/subtract.epub --out runs/subtract/out` then a script prints id, role, strategy, characters for all items (saved in the results section, numbers only).
 3. After translation: `python scripts/audit_suite.py --source runs/subtract/subtract.epub --output <out.epub> --book-dir runs/subtract/out/subtract`, expecting `4 PASS`.
@@ -61,7 +65,8 @@ Phase 5 is a run, so the checks are commands on the output, plus the existing su
 
 ## Sub-tasks
 
-- [ ] 5.1 User approves this DoD and Test Plan and answers the open questions
+- [x] 5.1 User approved this DoD and Test Plan and answered the open questions (2026-11-12)
+- [x] 5.1b `quota-guard` mod built, tested, install scripts smoke-tested in an isolated config dir (not yet installed in the user's Claude; the user runs the script)
 - [ ] 5.2 Pre-flight (A): extract, classification, state, glossary; record
 - [ ] 5.3 Style sample and tone gate (B)
 - [ ] 5.4 Pilot, then fan-out with Grade per batch (C, D)
@@ -91,5 +96,5 @@ Phase 5 is a run, so the checks are commands on the output, plus the existing su
 1. **Who drives the run:** (a). Pre-flight here; the user runs the skill in a fresh Claude Code session (this is also the fresh-session check); I do the audits, measurement and write-up afterwards.
 2. **Skill install:** copy this repo's skill into `~/.claude/skills/book-translator/` (checked: no copy exists there today, so nothing is overwritten). Done in 5.2, after approval; `runs/` and `.git` are not copied.
 3. **Tail pages:** `Notes`, `Image Credits`, "Thank you for buying this" and `Document Outline` become `source_only` in the pre-flight; the rest translate.
-4. **Stop rule accepted** (stop and report if more than 3 of the first 10 items need Opus escalation). **Quota ceiling: 85% of the 5-hour window.** The user's `usage-band@minh-skills` plugin shows the 5-hour figure, but it is a display only (its README: no network calls, writes no files), so the assistant cannot read it. Rule: after every batch of 5 items the assistant stops and asks the user to look at the band; at 85% or more (the band turns red) the run pauses until the window resets (the band shows the reset time). The old `agent-orch` gate stays unused.
+4. **Stop rule accepted** (stop and report if more than 3 of the first 10 items need Opus escalation). **Quota ceiling: 85% of the 5-hour window, enforced automatically** by a small Claude mod, `tools/quota-guard/` (the user's `usage-band` mod only displays the figure, so a new mod reads `$.session.usage()` itself): it refuses new `Agent` calls while the 5-hour window is at or above the threshold (default 85) with the percent and reset time in the message, toasts once when crossed, releases by itself after the reset, and fails open if no figure exists. `install.ps1` / `install.sh` install it into the user's Claude (user scope). The assistant still reports after every batch of 5. The old `agent-orch` gate stays unused.
 5. **Reader:** Kindle (probably Send to Kindle, which converts the EPUB). Check in the read-back that the source and Vietnamese paragraphs both show in order, that Vietnamese diacritics render, and that the table of contents entries for the split chapters work. If Kindle's conversion drops the styling, that is a reader limit to record, not a pipeline failure.
