@@ -1,6 +1,6 @@
 # Task: Phase 4 — The skill file (`SKILL.md`) and the fixes scheduled for it
 
-Status: DRAFT, awaiting user approval of the Definition of Done and Test Plan.
+Status: DRAFT. Open questions answered 2026-11-12 (see the end of this doc); awaiting the user's explicit approval of the Definition of Done and Test Plan.
 
 Depends on: Phase 3 (PR #7, CI green, unmerged at the time of writing). Plan: `docs/plans/2026-11-11-vietnamese-language-profile.md` (Phase 4: Vietnamese trigger phrases, a step that asks for the target language, remove or make optional the `agent-orch` quota line; done when a fresh Claude Code session runs the skill with `vi` without manual fixes). Bugs scheduled here (`docs/BUGS.md`): BUG-001 (decide), BUG-002, BUG-003. Decision carried from Phase 2: `build_terms.py` is not available for `vi`.
 
@@ -49,14 +49,23 @@ C. **BUG-001**: decision first, then (if a fix is chosen) the fix before Phase 5
 
 ## Sub-tasks
 
-- [ ] 4.1 User approves this DoD and Test Plan; answers the open questions
+- [ ] 4.1 User approves this DoD and Test Plan (open questions answered 2026-11-12; explicit approval still needed)
 - [ ] 4.2 BUG-001 decision written (DECISIONS.md) and BUGS.md updated
 - [ ] 4.3 Red tests for BUG-002 and BUG-003; Advise call for the default ratio; fixes
 - [ ] 4.4 `SKILL.md` edits (A) and the structural test
 - [ ] 4.5 Dry run on the Alice excerpt; record results
 - [ ] 4.6 BUG-001 fix if chosen (own PR or sub-task); verify DoD; ledger
 
-## Open questions for you
+## Answers (user, 2026-11-12)
+
+1. **BUG-001:** "a or b, depends on which will have better performance." Chosen: **(a)**, split at the NCX/nav fragment targets inside `extract_epub.py`. Reason: one pass over the spine files the extractor already reads; (b) would rewrite a whole EPUB and then extract it a second time. Fallback for an EPUB whose NCX has no anchors: today's behaviour (one item per spine file). Own PR, before Phase 5, test on a synthetic EPUB.
+2. **Languages advertised:** `zh-tw` and `vi` only; expand later if ever needed.
+3. **Fresh-session check:** moves to Phase 5 and is **run by the user**; I will ask them to do it then. Phase 4 uses the scripted dry run.
+4. **Quota gate:** optional (run only if the command exists).
+
+DoD change from the answers: the fresh-session item is not part of Phase 4; the BUG-001 item is fixed to approach (a).
+
+## Open questions for you (original text)
 
 1. **BUG-001 approach.** (a) split spine files at the NCX/nav fragment targets inside `extract_epub.py`; (b) a separate pre-split script before extraction; (c) document the limit and require pre-split EPUBs. I lean (a): the evidence above shows the *Subtract* NCX carries an anchor for every chapter, the extractor already owns the manifest, and (c) leaves Phase 5 without its book. Risk of (a): an EPUB whose NCX has no anchors still needs a fallback; keep today's behaviour (one item per spine file). Timing: before Phase 5, in its own PR so Phase 4 stays reviewable.
 2. **Languages the skill advertises.** Only `zh-tw` and `vi`, or also mention that `zh-cn`, `en`, `ja`, `ko` fall back to the generic prompt without being supported end to end? I lean to advertise only the two that are tested.
