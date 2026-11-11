@@ -1,13 +1,13 @@
 # Task Ledger
 
-Current status: Phase 0 done. Phase 1 (profile, zh-tw only) in progress: DoD approved, sub-tasks 1.1a (frozen fixture), 1.1b (golden tests) and 1.2 (profile module) done; 1.3 (convert consumers, leaf first) is next. 7 guard tests in `test/test_lang_profile.py` are red on purpose until 1.3 converts their consumer.
+Current status: Phase 0 done. Phase 1 (profile, zh-tw only): sub-tasks 1.1a, 1.1b, 1.2 and 1.3 done; local gates green (472 passed / 269 skipped, snapshot identical, grep gate, scope guard). 1.4 waits for CI on PR #4 and the ubuntu counts.
 
 Plan and rationale: `docs/plans/2026-11-11-vietnamese-language-profile.md`. This ledger tracks status only; a phase's DoD, test plan and notes live in its detail doc.
 
 | # | Phase | Status | Evidence | Detail |
 |---|-------|--------|----------|--------|
 | 0 | Baseline | done 2026-11-11 | PR #2 (CI green: ubuntu py3.10/3.12, windows py3.12); `runs/alice/` extracts, 14 spine items | `docs/tasks/00-baseline/TASK.md` |
-| 1 | Profile with zh-tw only | in progress (DoD approved 2026-11-11; 1.1a, 1.1b, 1.2 done) | | `docs/tasks/01-profile-zh-tw/TASK.md` |
+| 1 | Profile with zh-tw only | in progress (DoD approved 2026-11-11; 1.1a-1.3 done; 1.4 pending CI) | | `docs/tasks/01-profile-zh-tw/TASK.md` |
 | 2 | Vietnamese profile | not started | | created when Phase 1 is done |
 | 3 | Detector and audits | not started | | created when Phase 2 is done |
 | 4 | Skill file | not started | | created when Phase 3 is done |
