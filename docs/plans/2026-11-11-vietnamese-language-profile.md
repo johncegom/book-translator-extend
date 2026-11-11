@@ -84,7 +84,7 @@ Chinese is detected by script; Vietnamese shares Latin letters with English, so 
 - **Done when:** a fresh Claude Code session runs the skill with `vi` without manual fixes.
 
 ### Phase 5: One full book
-- Run the whole pipeline on the test book.
+- Run the whole pipeline on the test book: *Subtract* by Leidy Klotz (user's choice, 2026-11-11; local only, copyrighted). The Alice frozen fixtures remain the committed regression samples.
 - Open the result in a reader; check one early and one late chapter.
 - **Done when:** all four audits pass and the read-back looks right.
 

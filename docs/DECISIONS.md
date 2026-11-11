@@ -69,3 +69,18 @@
 **Decision:** `is_target_text` is true when the text has a distinctive letter (current rule) or at least one unambiguous Vietnamese function word from a short list (e.g. của, và, không, những, được). Implemented and tested in Phase 3 with labelled samples (vi, fr, pt, en), after an Advise call. The 50-char, mixed-text and echo rules stay as in DECISION-003.
 **Alternatives considered:** Letters only (known false negative); diacritic-density threshold (needs labelled data, closer to French); a language-ID library (new dependency, weak on short text).
 **Consequences:** The word list needs maintenance. Known false positives remain: ă (Romanian) and đ (Croatian) in source text, judged negligible for English sources.
+
+## DECISION-011: The echo check runs for every profile; no `echo_check` profile field
+
+**Context:** Phase 3 needs a check that a target paragraph (>= 50 chars, not a heading, not in `source_only` exceptions) is not equal to its source. The user first chose a profile field (`echo_check`, zh-tw False, vi True); the Advise call (opus, 2026-11-11) recommended no field, and the user then chose that.
+**Decision:** The check lives in `translation_quality_audit._audit_findings` and applies to all profiles, as a hard failure. Comparison: whitespace collapsed and NFC-normalised, case-sensitive. `LanguageProfile` stays at 17 fields.
+**Alternatives considered:** A profile field (zh-tw provably unchanged, but a field for a defect that exists in any language, and the zh-tw path would never be exercised); putting it in `is_target_text` (mixes two questions, and that predicate is shared with the source-only branch).
+**Consequences:** A verbatim paragraph (epigraph, URL line, code listing) of 50+ characters must be listed in `source_only.json` or it fails. If a zh-tw golden fixture ever contains an echo pair the check would flip it; none does today (golden and snapshot tests unchanged). Near-echoes are the detector's and the length check's job, not this one's.
+
+## DECISION-012: Vietnamese min_length_ratio is a flat, provisional 0.60 for every vi register
+
+**Context:** The zh-tw values (0.22, 0.22, 0.30) are tuned for Chinese, which is much shorter than English. Measured vi/en character ratios: Alice excerpt 0.80-0.94 (n=8), a non-fiction book 0.91-1.16 (n=8), one translator, hand-written. No data for academic text. Advise (Fable, one-time user override) recommended a flat value.
+**Decision:** `min_length_ratio: 0.6` in each of the three registers in `assets/register_hints.vi.json`. 0.60 is 0.75 of the measured minimum. The amber margins (0.04 and 0.02) are left as they are. Recalibrate from the first real machine-translated book (Phase 5).
+**Alternatives considered:** 0.55/0.55/0.60 (my leaning; a separate academic value has no data behind it); a higher value (a length ratio only catches gross truncation, and one dropped sentence in four lands near 0.75, inside the legitimate range).
+**Consequences:** Does not catch a paragraph that lost under 40% of its content, nor one padded to full length. Unmatched registers still get 0.22 (BUG-002). Values are provisional.
+

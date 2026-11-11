@@ -4,6 +4,7 @@
       "id": "literary_fiction",
       "description": "Literary fiction with plain spoken register and economy of words",
       "register": "storyteller cadence",
+      "min_length_ratio": 0.6,
       "prefer": ["nhịp kể tự nhiên", "câu ngắn", "giọng hơi châm biếm"],
       "avoid": ["dịch từng chữ", "văn phong quá trang trọng", "lạm dụng từ Hán Việt"],
       "subagent_rules": [
@@ -18,6 +19,7 @@
       "id": "non_fiction_narrative",
       "description": "Business and social-science narrative that keeps the author's first person",
       "register": "practical business memoir",
+      "min_length_ratio": 0.6,
       "prefer": ["nhịp kể tự nhiên", "ví dụ cụ thể", "giữ ngôi thứ nhất của tác giả", "giữ sự hài hước"],
       "avoid": ["văn phong học thuật", "dịch từng chữ", "đổi “tôi” thành “tác giả”"],
       "subagent_rules": [
@@ -31,6 +33,7 @@
       "id": "academic_technical",
       "description": "Academic or technical writing where precision outweighs readability",
       "register": "scholarly precision",
+      "min_length_ratio": 0.6,
       "prefer": ["thuật ngữ chính xác", "từ nối logic", "câu đầy đủ"],
       "avoid": ["khẩu ngữ", "đùa cợt", "sắc thái chủ quan"],
       "subagent_rules": [
