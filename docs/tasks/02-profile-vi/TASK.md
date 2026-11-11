@@ -1,6 +1,6 @@
 # Task: Phase 2 — Vietnamese profile (`vi`)
 
-Status: DRAFT 2026-11-11. Questions 1, 3, 4, 5 decided; question 2 (wording) still open. DoD not yet approved. Nothing is implemented. Call Advise (once, for the new field set) before changing `LanguageProfile`.
+Status: DRAFT 2026-11-11. All five open questions decided. DoD awaiting the user's final approval. Nothing is implemented. Call Advise (once, for the new field set) before changing `LanguageProfile`.
 
 Depends on: Phase 1 (merged, PR #4). Plan: `docs/plans/2026-11-11-vietnamese-language-profile.md`. Decisions to honour: DECISION-002 (keep the `chapter_titles_zh` key), DECISION-006 (tighten `resolve_profile`), DECISION-007 (profile shape).
 
@@ -20,7 +20,7 @@ A registered `vi` profile so that, with `target_lang: "vi"` in `state.json`, the
 ## Decisions on the open questions (user, 2026-11-11)
 
 1. **Register hints: decided, option (a).** A second file `assets/register_hints.vi.json` plus a profile field naming it. The zh-tw file stays untouched.
-2. **Vietnamese wording: open.** The first sample EPUB (Bố Già) was a 600-character landing page with no structural labels, so nothing was usable. A second sample (`Kinh Doanh Nhỏ Thu Lợi Lớn`, Alpha Books, 2013) has real structure; candidate terms from it are listed in the chat and need the author's yes/no before use. Until then the draft table below is unreviewed.
+2. **Vietnamese wording: decided 2026-11-11.** Title Page = `Trang tiêu đề` (user, also used on the FTU WPS page); Introduction = `Lời nói đầu` (user's choice); the other terms are accepted as a working set, "temporary use", and may be revised later. Roman (`Phần I`) and Arabic (`Phần 1`) numbering are both acceptable; the tables keep Roman to match the English source keys. Sources are in the provenance table below.
 3. **Names: decided.** Keep the original spelling of personal and place names; no Vietnamese forms (no Luân Đôn / Pa-ri) unless the glossary supplies one.
 4. **`build_terms.py`: out of scope for Phase 2 (accepted).** It is an optional term-review step whose OpenCC/Simplified check is mandatory and zh-only. Phase 4 must make `SKILL.md` say the step is not available for `vi` and must not let a Vietnamese run hit the OpenCC `RuntimeError`.
 5. **Unknown codes: decided.** `assemble` and `audit_suite` (and the `state.json` reader) raise a clear error for a `target_lang` with no profile (e.g. `vn`). `build_subagent_prompt` keeps the pinned fallback for `zh-cn`, `en`, `ja`, `ko`.
@@ -37,11 +37,24 @@ A registered `vi` profile so that, with `target_lang: "vi"` in `state.json`, the
 | `bilingual_edition_label` | `Song ngữ Anh–Việt` |
 | `aup_refused_notice` | `Chương này bị từ chối dịch do chính sách của LLM; giữ nguyên bản gốc, chưa dịch` |
 | `prefix_labels` | `praise for ` → `Lời khen ngợi`; `advance praise for ` → `Lời khen ngợi`; `also by ` → `Cùng tác giả` |
-| `contents_labels` | Contents → Mục lục; Cover → Bìa; Title Page → Trang tựa; Copyright → Bản quyền; Dedication → Lời đề tặng; PART I → Phần I; PART II → Phần II; Acknowledgments → Lời cảm ơn; Notes → Chú thích; About the Author → Về tác giả |
-| `structural_labels` | Contents → Mục lục; Introduction → Giới thiệu; PART I → Phần I; PART II → Phần II; Acknowledgments → Lời cảm ơn; Notes → Chú thích; About the Author → Về tác giả; "What’s next on your reading list?" / "What's next on your reading list?" → "Bạn sẽ đọc gì tiếp theo?"; "Discover your next great read!" → "Khám phá cuốn sách hay tiếp theo của bạn!"; "Get personalized book picks and up-to-date news about this author." → "Nhận gợi ý sách dành riêng cho bạn và tin tức mới nhất về tác giả này."; "Sign up now." → "Đăng ký ngay."; "GO TO NOTE REFERENCE IN TEXT" → "QUAY LẠI VỊ TRÍ GHI CHÚ TRONG VĂN BẢN" |
+| `contents_labels` | Contents → Mục lục; Cover → Bìa; Title Page → Trang tiêu đề; Copyright → Bản quyền; Dedication → Lời đề tặng; PART I → Phần I; PART II → Phần II; Acknowledgments → Lời cảm ơn; Notes → Chú thích; About the Author → Về tác giả |
+| `structural_labels` | Contents → Mục lục; Introduction → Lời nói đầu; PART I → Phần I; PART II → Phần II; Acknowledgments → Lời cảm ơn; Notes → Chú thích; About the Author → Về tác giả; "What’s next on your reading list?" / "What's next on your reading list?" → "Bạn sẽ đọc gì tiếp theo?"; "Discover your next great read!" → "Khám phá cuốn sách hay tiếp theo của bạn!"; "Get personalized book picks and up-to-date news about this author." → "Nhận gợi ý sách dành riêng cho bạn và tin tức mới nhất về tác giả này."; "Sign up now." → "Đăng ký ngay."; "GO TO NOTE REFERENCE IN TEXT" → "QUAY LẠI VỊ TRÍ GHI CHÚ TRONG VĂN BẢN" |
 | `prompt_rules` (no braces) | "Vietnamese rule: If the target is Tiếng Việt, write standard Vietnamese with full diacritics in Unicode NFC. Keep the original spelling of personal names and place names unless the glossary gives a Vietnamese form. Prefer natural, idiomatic Vietnamese over word-for-word rendering. Use Vietnamese punctuation and quotation marks consistently." |
 | `default_custom_instructions` | "Translate for a Vietnamese general reader. Keep sentences natural; avoid translationese (câu dịch word-for-word)." |
 | `is_target_text` | `True` when the text contains a Vietnamese-only letter (ă â đ ê ô ơ ư, upper or lower case, or any tone-marked vowel) |
+
+### Provenance of the label wording
+
+| English | Vietnamese | Basis |
+|---|---|---|
+| Title Page | Trang tiêu đề | user instruction; also on fwps.ftu.edu.vn/quy-dinh (the national book standard TCVN 8694:2011 says "trang tên sách"; the user's choice wins) |
+| Acknowledgments | Lời cảm ơn | fwps.ftu.edu.vn/quy-dinh |
+| Notes | Chú thích | fwps.ftu.edu.vn/quy-dinh ("chú thích cuối trang") |
+| Contents | Mục lục | TCVN 8694:2011 and general usage |
+| Introduction | Lời nói đầu | user's choice (the sampled Alpha Books EPUB uses "Mở đầu"; not adopted) |
+| Cover, Copyright, Dedication, About the Author, Part | Bìa, Bản quyền, Lời đề tặng, Về tác giả, Phần | author's knowledge, accepted as temporary; unsourced |
+
+Not adopted: `Kết luận` and `Nhà Xuất bản` (no matching English keys in the current tables).
 
 ## Definition of Done (draft)
 
