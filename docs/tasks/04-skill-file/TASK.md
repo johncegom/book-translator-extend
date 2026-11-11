@@ -54,7 +54,7 @@ C. **BUG-001**: decision first, then (if a fix is chosen) the fix before Phase 5
 - [x] 4.3 Red tests for BUG-002 and BUG-003; Advise call for the default ratio; fixes (done 2026-11-12: Advise opus logged; tests in test/test_phase4_bugs.py; carve-outs: test_lang_profile_vi.py and, from Phase 3, test_vi_length_ratio_phase3.py, the latter not an existing-test edit since it is newer than the gate commit)
 - [x] 4.4 `SKILL.md` edits (A) and the structural test (SKILL.md edited, version 1.4.0; test/test_skill_md_phase4.py, 5 assertions)
 - [x] 4.5 Dry run on the Alice excerpt; record results (docs/tasks/04-skill-file/dry_run.py; results below)
-- [ ] 4.6 BUG-001 fix if chosen (own PR or sub-task); verify DoD; ledger
+- [x] 4.6 BUG-001 fix if chosen (own PR or sub-task); verify DoD; ledger (code and tests done; CI and merge pending)
 
 ## Answers (user, 2026-11-12)
 
@@ -96,3 +96,10 @@ Why more than the extractor: `assemble.py` writes one output file per `original_
 - Known limit, not fixed here: `patch_toc_ncx` matches entries to NCX points by file name; with several entries per file all points of that file may get one label. It must not crash; logged as a bug if confirmed.
 
 Tests (synthetic EPUB, test-first, `test/test_phase4_bug001_split.py`): split into the right segments with text preserved; no split without fragments, with one fragment, or when the targets share one wrapper element (manifest has no `fragment_id` key); ids stable for unsplit books; assemble round trip puts every segment, source and translation, in order inside one original file; nav href carries the fragment; Alice extract is unchanged (existing golden tests plus a manifest comparison with `main`).
+
+### 4.6 Results
+- `test/test_phase4_bug001_split.py`: 11 tests on a synthetic EPUB (split, no split without two usable targets, no split inside one wrapper, size threshold, ids, assemble round trip, nav fragments). Red before the code, green after.
+- Alice: `diff -r` of the extract output before and after the change is empty (14 items).
+- *Subtract* (local only): 23 items instead of 5, largest 84,236 characters; the body text of every original file equals the concatenation of its segments.
+- Full suite: 668 passed, 269 skipped. Existing-test gate: nothing changed.
+- Design change found while implementing: the first version split Alice too; DECISION-014 adds the 60,000-character floor.

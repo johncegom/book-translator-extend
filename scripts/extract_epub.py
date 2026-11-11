@@ -44,6 +44,7 @@ import re
 import sys
 import zipfile
 from pathlib import Path
+from urllib.parse import unquote
 
 from bs4 import BeautifulSoup
 from ebooklib import epub
@@ -79,6 +80,10 @@ SOURCE_ONLY_ROLES = {
     "notes",
 }
 _HEADING_MAX_LEN = 120
+# BUG-001: only a spine file at least this many characters long is split at its TOC targets. Ordinary
+# chapter files (Alice's biggest is about 30k) keep today's one-item-per-file behaviour; the books that
+# hit the problem pack 100k+ characters into one file.
+_SPLIT_MIN_CHARS = 60000
 _ROLE_TO_HEADING = {
     "cover": "Cover",
     "title_page": "Title Page",
@@ -116,27 +121,39 @@ def extract(
     cover_filename = _extract_cover(epub_path, book_out)
     images = _extract_images(epub_path, book_out)
 
-    entries: list[SpineEntry] = []
-    translate_counter = 0
-    current_part_id: str | None = None
+    # One unit per output item. Normally one per spine file; BUG-001: a file the TOC points into at
+    # several places is split into one unit per target (see _split_at_toc_targets).
+    toc_targets = _toc_targets(epub_path, opf_path, opf_manifest)
+    units: list[tuple] = []
+    extra = 0
     for index, (src_idref, linear) in enumerate(_spine_idrefs(book), start=1):
         item = book.get_item_with_id(src_idref)
         opf_item = opf_manifest.get(src_idref, {})
         if item is None:
             continue
+        src_href = str(opf_item.get("href") or item.get_name())
+        _copy_original_xhtml(epub_path, book_out, src_href, opf_path)
+        full_html = item.get_content().decode("utf-8", errors="replace")
+        segments = _split_at_toc_targets(full_html, toc_targets.get(posixpath.normpath(src_href), []))
+        for seg_no, (fragment_id, toc_label, seg_html) in enumerate(segments):
+            if seg_no:
+                extra += 1
+            units.append((index + extra, src_idref, linear, item, opf_item, src_href, fragment_id, toc_label, seg_html))
+
+    entries: list[SpineEntry] = []
+    translate_counter = 0
+    current_part_id: str | None = None
+    for item_index, src_idref, linear, item, opf_item, src_href, fragment_id, toc_label, html in units:
         media_type = str(opf_item.get("media_type") or getattr(item, "media_type", ""))
-        html = item.get_content().decode("utf-8", errors="replace")
         soup = BeautifulSoup(html, "html.parser")
         text = soup.get_text(" ", strip=True)
-        item_id = f"item_{index:03d}"
+        item_id = f"item_{item_index:03d}"
         out_path = chapters_dir / f"{item_id}.html"
         out_path.write_text(html, encoding="utf-8")
-        src_href = str(opf_item.get("href") or item.get_name())
         original_path = src_href
-        _copy_original_xhtml(epub_path, book_out, original_path, opf_path)
         heading = _first_heading_tag(soup)
         styled_heading = styled_paragraph_title(soup)
-        fallback_heading = heading or styled_heading or _first_text(text) or "(untitled)"
+        fallback_heading = heading or styled_heading or toc_label or _first_text(text) or "(untitled)"
         role = infer_role(
             src_idref=src_idref,
             src_href=src_href,
@@ -169,7 +186,8 @@ def extract(
                 id=item_id,
                 src_idref=src_idref,
                 src_href=src_href,
-                original_idref=src_idref,
+                # A split segment needs its own key: nav_overrides are looked up by original_idref.
+                original_idref=src_idref if fragment_id is None else f"{src_idref}#{fragment_id}",
                 original_path=original_path,
                 href=f"chapters/{item_id}.html",
                 linear=linear,
@@ -180,6 +198,7 @@ def extract(
                 output_strategy=strategy,
                 translation_id=translation_id,
                 parent_id=parent_id,
+                fragment_id=fragment_id,
             )
         )
         if role == "part_divider":
@@ -208,6 +227,93 @@ def extract(
     }
     save(manifest, book_out / "manifest.json")
     return book_out
+
+
+def _resolve_toc_href(base_dir: str, href: str) -> tuple[str, str | None]:
+    path, _, fragment = unquote(href).partition("#")
+    joined = posixpath.normpath(posixpath.join(base_dir, path)) if path else ""
+    return joined, (fragment or None)
+
+
+def _toc_targets(epub_path: Path, opf_path: str | None, opf_manifest: dict) -> dict[str, list[tuple[str, str]]]:
+    """Map spine file archive path (the OPF manifest href as the reader reports it) -> [(fragment id, label)].
+
+    Reads the NCX if the OPF lists one, else the EPUB3 nav. Entries without a fragment are skipped.
+    Any read or parse problem gives an empty map, which means no splitting.
+    """
+    ncx = next((v["href"] for v in opf_manifest.values() if v.get("media_type") == "application/x-dtbncx+xml"), None)
+    nav = next((v["href"] for v in opf_manifest.values() if "nav" in str(v.get("properties") or "").split()), None)
+    source, kind = (ncx, "ncx") if ncx else (nav, "nav")
+    if not source:
+        return {}
+    source_path = posixpath.normpath(source)  # the reader already gives archive paths
+    try:
+        with zipfile.ZipFile(epub_path) as z:
+            data = z.read(source_path).decode("utf-8", errors="replace")
+    except (KeyError, OSError, zipfile.BadZipFile):
+        return {}
+    base = posixpath.dirname(source_path)
+    pairs: list[tuple[str, str]] = []
+    if kind == "ncx":
+        soup = BeautifulSoup(data, "lxml-xml")
+        for point in soup.find_all("navPoint"):
+            content = point.find("content")
+            label = point.find("navLabel")
+            if content is not None and content.get("src"):
+                pairs.append((str(content["src"]), label.get_text(" ", strip=True) if label is not None else ""))
+    else:
+        soup = BeautifulSoup(data, "html.parser")
+        for anchor in soup.find_all("a", href=True):
+            pairs.append((str(anchor["href"]), anchor.get_text(" ", strip=True)))
+    targets: dict[str, list[tuple[str, str]]] = {}
+    for href, label in pairs:
+        joined, fragment = _resolve_toc_href(base, href)
+        if not joined or not fragment:
+            continue
+        targets.setdefault(joined, []).append((fragment, label))
+    return targets
+
+
+def _split_at_toc_targets(html: str, targets: list[tuple[str, str]]) -> list[tuple[str | None, str | None, str]]:
+    """Split one spine file at its TOC targets; return [(fragment id, TOC label, html)].
+
+    Returns the single segment (None, None, html) unless the body has at least _SPLIT_MIN_CHARS of
+    text and at least two distinct targets exist in the file and sit in different top-level children of <body>. Each segment keeps the original head and
+    holds its slice of the body; the first one also takes anything before the first target.
+    """
+    whole = [(None, None, html)]
+    if len({fragment for fragment, _ in targets}) < 2:
+        return whole
+    soup = BeautifulSoup(html, "html.parser")
+    body = soup.find("body")
+    if body is None or len(body.get_text(" ", strip=True)) < _SPLIT_MIN_CHARS:
+        return whole
+    children = list(body.contents)
+    position = {id(child): i for i, child in enumerate(children)}
+    found: dict[int, tuple[str, str]] = {}
+    for fragment, label in targets:
+        node = soup.find(id=fragment) or soup.find(attrs={"name": fragment})
+        while node is not None and node.parent is not body:
+            node = node.parent
+        if node is None or id(node) not in position:
+            continue
+        found.setdefault(position[id(node)], (fragment, label))
+    if len(found) < 2:
+        return whole
+    starts = sorted(found)
+    segments: list[tuple[str | None, str | None, str]] = []
+    for k, start in enumerate(starts):
+        lo = 0 if k == 0 else start
+        hi = starts[k + 1] if k + 1 < len(starts) else len(children)
+        part = BeautifulSoup(html, "html.parser")
+        part_body = part.find("body")
+        part_children = list(part_body.contents)
+        part_body.clear()
+        for child in part_children[lo:hi]:
+            part_body.append(child)
+        fragment, label = found[start]
+        segments.append((fragment, label, str(part)))
+    return segments
 
 
 def infer_role(*, src_idref: str, src_href: str, first_heading: str, properties: str = "") -> str:

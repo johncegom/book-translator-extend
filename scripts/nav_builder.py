@@ -165,6 +165,8 @@ def _render_nav_item(entry: dict, children: list[dict], nav_path: str, opf_dir: 
     label = _nav_display_label(entry, None, profile)
     target = _entry_original_path(entry, f"{opf_dir}/content.opf" if opf_dir else None)
     href = posixpath.relpath(target, posixpath.dirname(nav_path) or ".")
+    if entry.get("fragment_id"):
+        href += "#" + str(entry["fragment_id"])
     anchor = f'<a href="{html.escape(quote(href, safe="/#._-"))}">{html.escape(label)}</a>'
     if not children:
         return f"        <li>{anchor}</li>"
