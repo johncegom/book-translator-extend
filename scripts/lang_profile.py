@@ -196,16 +196,38 @@ _VI_GENERIC_RULES = (
 
 # Letters distinctive to Vietnamese: ă đ ơ ư ĩ ũ (either case) and the tone-marked vowels
 # U+1EA0-U+1EF9. Letters shared with French/Portuguese (à á â ã è é ê ì í ò ó ô õ ù ú) do not
-# count, so "café" or "crêpe" is not Vietnamese. Thresholds for mixed text and short
-# paragraphs are Phase 3's job.
+# count, so "café" or "crêpe" is not Vietnamese.
 _VI_DISTINCTIVE_RE = re.compile(
     "[ăđơưĩũĂĐƠƯĨŨẠ-ỹ]"
 )
+# Function words with no distinctive letter, needed for short text ("Xin chào", "Tôi và em").
+# "em" (Portuguese), "là" (French) and "anh" (English "Anh") are left out on purpose.
+_VI_FUNCTION_WORDS = frozenset({"và", "không", "tôi", "xin", "chào", "các", "này"})
+_VI_SHORT_TEXT_MAX = 50  # LEGACY_ENGLISH_MIN_LENGTH: below it any match counts, from it the share rule applies
+_VI_MIN_SHARE = 0.25  # DECISION-010 / TASK.md 3.3: real Vietnamese 0.45-0.79, English with a name <= 0.17
+
+
+def _vi_token_matches(token: str) -> bool:
+    return bool(_VI_DISTINCTIVE_RE.search(token)) or token.casefold() in _VI_FUNCTION_WORDS
 
 
 def _vi_is_target_text(text: str) -> bool:
-    """True when the NFC-normalised text contains a letter distinctive to Vietnamese."""
-    return bool(_VI_DISTINCTIVE_RE.search(unicodedata.normalize("NFC", text)))
+    """Whether the text is Vietnamese (Advise outcome in docs/tasks/03-detector-audits/TASK.md).
+
+    Count only lowercase-initial tokens, because capitalised proper nouns are what fool the
+    check in both directions; with no lowercase-initial token (a Title Case heading or a lone
+    name) count every token. Text of 50+ characters needs a quarter of the counted tokens to
+    match; shorter text needs one.
+    """
+    text = unicodedata.normalize("NFC", text).strip()
+    tokens = [t for t in re.findall(r"\w+", text) if not t.isdigit()]
+    counted = [t for t in tokens if t[0].islower()] or tokens
+    if not counted:
+        return False
+    matches = sum(1 for t in counted if _vi_token_matches(t))
+    if len(text) < _VI_SHORT_TEXT_MAX:
+        return matches >= 1
+    return matches / len(counted) >= _VI_MIN_SHARE
 
 
 VI = LanguageProfile(

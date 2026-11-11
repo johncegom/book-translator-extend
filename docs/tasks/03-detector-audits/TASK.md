@@ -47,7 +47,7 @@ D. Mixed text (a single "Nguyễn" in an English paragraph): the plan says the s
 - [x] 3.1 User approved this DoD and Test Plan (2026-11-11; open questions answered)
 - [x] 3.2 Labelled sample set and vi length ratios (results under "3.2 results" below)
 - [x] 3.3 Advise call on detector + mixed-text rule, logged (answer under "3.3 Advise outcome")
-- [ ] 3.4 Red tests, then implement detector (A, D)
+- [x] 3.4 Red tests, then implement detector (A, D); results under "3.4 results"
 - [ ] 3.5 Echo check (B), with the profile switch
 - [ ] 3.6 Ratio per register (C); Advise call if it changes a threshold
 - [ ] 3.7 Coverage-audit pair on the fixture; verify DoD; ledger
@@ -87,3 +87,11 @@ Rule for `vi` `is_target_text` (replaces my 0.25-of-all-words leaning; changed: 
 Why it matters beyond mixed text: `bilingual_coverage_audit._source_nodes_requiring_coverage` and `translation_quality_audit` (inline-bilingual exemption) call `is_target_text` on the English source node. With any-match, a source paragraph that merely contains a Vietnamese name is skipped from coverage. Needs tests: short English sources with Vietnamese names and no `tgt` sibling must be flagged.
 
 Still to do from the advice: the 0.25 cutoff is checked against 11 real paragraphs by one translator; confirm on *Subtract* excerpts (3.4). `min_length_ratio` stays a separate Advise call in 3.6 (data floor 0.80, suggested 0.5-0.6). An exact-equality echo check (B) must be an actual audit check, not left to Grade.
+
+## 3.4 results (2026-11-11)
+
+- `test/test_vi_detector_phase3.py` written first: 25 of 71 tests red on the Phase 2 detector. `_vi_is_target_text` in `scripts/lang_profile.py` rewritten per the 3.3 rule. Suite: 618 passed, 269 skipped (547 + 71 new). No existing test file changed (`git diff --diff-filter=MDRT --name-only 71dc493 -- test/ ...` is empty); the Phase 2 detector tests pass untouched.
+- Cutoff check on *Subtract*: the 8 hand-translated excerpt paragraphs score 0.59-0.68 (lowercase-token share), above the 0.45 floor seen before and far from 0.25. The cutoff stands.
+- Frozen-fixture snapshots: zh-tw identical to the `bb0eb35` baseline; `vi` identical to `baseline_vi_phase2.json` (the Alice excerpt has no short English source with a Vietnamese name, so nothing moves).
+- Behaviour change worth knowing: `bilingual_coverage_audit.audit()` returns only `(ok, failures)`; short untranslated English (< 50 chars) still goes amber (warning) by design. The change is that a source containing a Vietnamese name is no longer silently exempt. Tests use `_audit_with_warnings` for that.
+- Known remaining weak spots (not fixed): n=11+8 real Vietnamese paragraphs, one translator; a short English sentence whose lowercase words include a function word from the list is a false positive (e.g. "xin" as a typo); lowercase-initial Vietnamese names written without capitals are counted normally.
