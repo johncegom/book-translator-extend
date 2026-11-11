@@ -1,6 +1,6 @@
 # Task: Phase 4 — The skill file (`SKILL.md`) and the fixes scheduled for it
 
-Status: in progress. DoD and Test Plan approved by the user 2026-11-12; open-question answers recorded below.
+Status: done 2026-11-12 (PRs #9 and #11 merged; CI run 43069367924 green on ubuntu 3.10/3.12 and windows 3.12; 668 passed / 269 skipped locally). DoD and Test Plan approved by the user 2026-11-12.
 
 Depends on: Phase 3 (PR #7, CI green, unmerged at the time of writing). Plan: `docs/plans/2026-11-11-vietnamese-language-profile.md` (Phase 4: Vietnamese trigger phrases, a step that asks for the target language, remove or make optional the `agent-orch` quota line; done when a fresh Claude Code session runs the skill with `vi` without manual fixes). Bugs scheduled here (`docs/BUGS.md`): BUG-001 (decide), BUG-002, BUG-003. Decision carried from Phase 2: `build_terms.py` is not available for `vi`.
 
@@ -31,14 +31,14 @@ C. **BUG-001**: decision first, then (if a fix is chosen) the fix before Phase 5
 
 ## Definition of Done (draft)
 
-- [ ] `SKILL.md`: description and Triggers include English and Vietnamese phrases; Step 1 asks the target language; `target_lang` is written to `state.json` and passed to the prompt builder; the supported-languages table is present; `build_terms.py`, `offline_postprocess.py` and the offline engines are marked zh-tw only with an explicit "skip for `vi`" instruction; the `agent-orch` call is optional; version is 1.4.0.
-- [ ] No Han is added to `vi`-specific instructions, and the zh-tw instructions keep their meaning (a diff review; every changed line is listed in this doc's results).
-- [ ] BUG-002 fixed with tests: an unmatched register under `vi` gives 0.60; the zh-tw default stays 0.22; the carve-out test is the only existing test edited.
-- [ ] BUG-003 fixed with tests: the CLI on a `vi` book dir uses the `vi` profile; without `state.json` it keeps zh-tw.
-- [ ] BUG-001: the approach (a, b or c) recorded in `docs/DECISIONS.md` and the BUGS.md status updated. If (a) or (b) is chosen, the fix lands before Phase 5 (own PR or sub-task) with a test on a synthetic EPUB, not the copyrighted book.
-- [ ] A scripted dry run of the skill's Phase 4 path on the Alice excerpt with `target_lang: vi`: `state.json` written, prompt built with Vietnamese rules and no Han, assemble and `audit_suite` run with the `vi` profile, no manual fix. (The plan's "fresh Claude Code session" check is manual and moves to Phase 5; see open question 3.)
-- [ ] All Phase 1-3 checks hold: golden and frozen snapshots unchanged; `git diff --diff-filter=MDRT --name-only <phase-3 head> -- test/ ...` lists only the BUG-002 carve-out file; scope guard for the offline engines is empty.
-- [ ] CI green (ubuntu 3.10/3.12, windows 3.12). Ledger updated; any new bug to `docs/BUGS.md`, tradeoffs to `docs/DECISIONS.md`.
+- [x] `SKILL.md`: description and Triggers include English and Vietnamese phrases; Step 1 asks the target language; `target_lang` is written to `state.json` and passed to the prompt builder; the supported-languages table is present; `build_terms.py`, `offline_postprocess.py` and the offline engines are marked zh-tw only with an explicit "skip for `vi`" instruction; the `agent-orch` call is optional; version is 1.4.0.
+- [x] No Han is added to `vi`-specific instructions, and the zh-tw instructions keep their meaning (a diff review; every changed line is listed in this doc's results).
+- [x] BUG-002 fixed with tests: an unmatched register under `vi` gives 0.60; the zh-tw default stays 0.22; the carve-out test is the only existing test edited.
+- [x] BUG-003 fixed with tests: the CLI on a `vi` book dir uses the `vi` profile; without `state.json` it keeps zh-tw.
+- [x] BUG-001: the approach (a, b or c) recorded in `docs/DECISIONS.md` and the BUGS.md status updated. If (a) or (b) is chosen, the fix lands before Phase 5 (own PR or sub-task) with a test on a synthetic EPUB, not the copyrighted book.
+- [x] A scripted dry run of the skill's Phase 4 path on the Alice excerpt with `target_lang: vi`: `state.json` written, prompt built with Vietnamese rules and no Han, assemble and `audit_suite` run with the `vi` profile, no manual fix. (The plan's "fresh Claude Code session" check is manual and moves to Phase 5; see open question 3.)
+- [x] All Phase 1-3 checks hold: golden and frozen snapshots unchanged; `git diff --diff-filter=MDRT --name-only <phase-3 head> -- test/ ...` lists only the BUG-002 carve-out file; scope guard for the offline engines is empty.
+- [x] CI green (ubuntu 3.10/3.12, windows 3.12). Ledger updated; any new bug to `docs/BUGS.md`, tradeoffs to `docs/DECISIONS.md`.
 
 ## Test Plan
 
@@ -54,7 +54,7 @@ C. **BUG-001**: decision first, then (if a fix is chosen) the fix before Phase 5
 - [x] 4.3 Red tests for BUG-002 and BUG-003; Advise call for the default ratio; fixes (done 2026-11-12: Advise opus logged; tests in test/test_phase4_bugs.py; carve-outs: test_lang_profile_vi.py and, from Phase 3, test_vi_length_ratio_phase3.py, the latter not an existing-test edit since it is newer than the gate commit)
 - [x] 4.4 `SKILL.md` edits (A) and the structural test (SKILL.md edited, version 1.4.0; test/test_skill_md_phase4.py, 5 assertions)
 - [x] 4.5 Dry run on the Alice excerpt; record results (docs/tasks/04-skill-file/dry_run.py; results below)
-- [x] 4.6 BUG-001 fix if chosen (own PR or sub-task); verify DoD; ledger (code and tests done; CI and merge pending)
+- [x] 4.6 BUG-001 fix if chosen (own PR or sub-task); verify DoD; ledger (merged in PR #11)
 
 ## Answers (user, 2026-11-12)
 
