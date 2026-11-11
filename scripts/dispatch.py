@@ -89,12 +89,8 @@ SUBAGENT_PROMPT_TEMPLATE = _SUBAGENT_PROMPT_BASE.replace("{prompt_rules}", ZH_TW
 # Alias of the zh-tw profile data, kept for existing importers.
 DEFAULT_CUSTOM_INSTRUCTIONS = ZH_TW.default_custom_instructions
 
-GENERIC_SUBAGENT_RULES = [
-    "Plain target-language prose. Match the glossary's prefer/avoid lists in style_anchor.",
-    "Glossary names are mandatory — use them verbatim throughout.",
-    "Preserve paragraph boundaries and source paragraph count.",
-    "Avoid 翻譯腔. Default to short, natural sentences over literary clichés.",
-]
+# Alias of the zh-tw profile data; build_subagent_prompt uses the active profile's generic_rules.
+GENERIC_SUBAGENT_RULES = list(ZH_TW.generic_rules)
 
 _LEAK_PREFIX_PATTERNS = [
     re.compile(r"^Here\s+(is|are)\s+(the|your)?\s*translation[^\n]*\n+", re.IGNORECASE),
@@ -399,7 +395,8 @@ def build_subagent_prompt(
     register_rules = resolve_register_rules(
         glossary,
         register_override=register_override,
-        fallback_rules=GENERIC_SUBAGENT_RULES,
+        fallback_rules=list(profile.generic_rules),
+        profile=profile,
     )
     register_specific_rules = _format_register_specific_rules(register_rules, start=5)
     custom_rule_number = 5 + len(register_rules)

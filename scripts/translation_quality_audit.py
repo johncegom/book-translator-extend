@@ -140,7 +140,9 @@ def _audit_findings(
                     continue
                 tgt_text = _clean(tgt.get_text(" ", strip=True))
                 hard_target_failure = False
-                simplified_chars = _offending_simplified_chinese_chars(tgt_text)
+                simplified_chars = (
+                    _offending_simplified_chinese_chars(tgt_text) if profile.simplified_gate else ""
+                )
                 if simplified_chars:
                     hard_target_failure = True
                     failures.append(
@@ -241,7 +243,7 @@ def run(
     profile=None,
 ) -> AuditResult:
     resolved_ratio = (
-        _min_length_ratio_from_book_dir(book_dir)
+        _min_length_ratio_from_book_dir(book_dir, profile=profile)
         if min_length_ratio is None
         else min_length_ratio
     )
@@ -305,7 +307,7 @@ def _offending_simplified_chinese_chars(text: str) -> str:
     return "".join(chars)
 
 
-def _min_length_ratio_from_book_dir(book_dir: Path | None) -> float:
+def _min_length_ratio_from_book_dir(book_dir: Path | None, profile=None) -> float:
     default = 0.22
     if book_dir is None:
         return default
@@ -313,7 +315,7 @@ def _min_length_ratio_from_book_dir(book_dir: Path | None) -> float:
     if not glossary_path.is_file():
         return default
     glossary = json.loads(glossary_path.read_text(encoding="utf-8"))
-    register = resolve_register(glossary)
+    register = resolve_register(glossary) if profile is None else resolve_register(glossary, profile=profile)
     if not register:
         return default
     ratio = register.get("min_length_ratio")
