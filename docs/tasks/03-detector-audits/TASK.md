@@ -49,7 +49,7 @@ D. Mixed text (a single "Nguyễn" in an English paragraph): the plan says the s
 - [x] 3.3 Advise call on detector + mixed-text rule, logged (answer under "3.3 Advise outcome")
 - [x] 3.4 Red tests, then implement detector (A, D); results under "3.4 results"
 - [x] 3.5 Echo check (B), for every profile with no profile field (Advise + user, DECISION-011); results under "3.5 results"
-- [ ] 3.6 Ratio per register (C); Advise call if it changes a threshold
+- [x] 3.6 Ratio per register (C), after an Advise call; results under "3.6 results"
 - [ ] 3.7 Coverage-audit pair on the fixture; verify DoD; ledger
 
 ## Open questions for you
@@ -101,3 +101,9 @@ Still to do from the advice: the 0.25 cutoff is checked against 11 real paragrap
 - Advise (opus, logged): add the check, no field, every profile; exact equality, hard failure; skip headings, sources < 50 chars and `source_only` exceptions. The user chose this over the earlier field decision (DECISION-011).
 - `test/test_echo_check_phase3.py` (8 tests, 5 red first), then the check in `translation_quality_audit._audit_findings`. Correction to the advice: `_clean` collapses whitespace but does not NFC-normalise, so the comparison normalises explicitly (a decomposed-Unicode echo test failed before that). Suite 626 passed, 269 skipped; existing tests untouched (gate empty); zh-tw and vi frozen snapshots still identical to their baselines.
 - Not checked: `<pre>`/code nodes tagged `src` in a real book (the advice raised it); the exception match is exact on the cleaned text, like the existing source-only branch.
+
+## 3.6 results (2026-11-11)
+
+- Advise (Fable, one-time user override, logged): flat 0.60 for all three vi registers, provisional (DECISION-012); fallback left and logged as BUG-002; standalone CLI and `register_override` gaps logged as BUG-003 and BUG-004; amber margins unchanged. Deviation from my leaning (0.55/0.55/0.60): accepted.
+- `test/test_vi_length_ratio_phase3.py` (8 tests, 6 red first), then `min_length_ratio: 0.6` added to the three registers in `assets/register_hints.vi.json`; no code change. Suite 634 passed, 269 skipped; existing tests untouched (gate empty); zh-tw and vi frozen snapshots identical to their baselines (the fixture glossary has no register, so it does not exercise the ratio).
+- Advice claims verified in the code before acting: invented registers are allowed (`glossary.py:94`), the CLI passes no profile, the audit ignores `register_override`.
