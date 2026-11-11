@@ -1,0 +1,14 @@
+{
+  "name": "quota-guard-local",
+  "owner": {
+    "name": "Minh Duong"
+  },
+  "plugins": [
+    {
+      "name": "quota-guard",
+      "description": "Refuses new subagent calls while the 5-hour usage window is at or above a threshold.",
+      "source": "./"
+    }
+  ],
+  "description": "Local marketplace for the quota-guard mod"
+}
