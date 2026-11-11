@@ -46,7 +46,7 @@ D. Mixed text (a single "Nguyễn" in an English paragraph): the plan says the s
 
 - [x] 3.1 User approved this DoD and Test Plan (2026-11-11; open questions answered)
 - [x] 3.2 Labelled sample set and vi length ratios (results under "3.2 results" below)
-- [ ] 3.3 Advise call on detector + mixed-text rule; log it
+- [x] 3.3 Advise call on detector + mixed-text rule, logged (answer under "3.3 Advise outcome")
 - [ ] 3.4 Red tests, then implement detector (A, D)
 - [ ] 3.5 Echo check (B), with the profile switch
 - [ ] 3.6 Ratio per register (C); Advise call if it changes a threshold
@@ -75,3 +75,15 @@ D. Mixed text (a single "Nguyễn" in an English paragraph): the plan says the s
 | *Subtract* (excerpt, non-fiction; Introduction paragraphs 35, 38, 39, 43, 45, 46, 57, 58) | 8 | 0.91 | 1.01 | 1.16 |
 
 The Subtract text and translations stay in `runs/subtract/` (gitignored, copyrighted); only these numbers are committed (`runs/subtract/measure_ratio.py` reproduces them locally). zh-tw's 0.22 default is far below both: a Vietnamese paragraph at 0.3 would pass today. Threshold choice is for 3.6. Caveat: n=16, one translator.
+
+## 3.3 Advise outcome (2026-11-11, opus, logged in `docs/eagd-log.md`)
+
+Rule for `vi` `is_target_text` (replaces my 0.25-of-all-words leaning; changed: yes):
+1. NFC-normalise, tokenise with `\w+`; skip all-digit tokens.
+2. Count only tokens with `tok[0].islower()` (proper nouns are what fooled both directions). If the text has no lowercase-initial token (Title Case headings), count every token.
+3. A token matches when it has a distinctive letter or is in the function-word list: và, không, tôi, xin, chào, các, này. Not `em` (Portuguese "em", English "'em"), not `là` (French), not `anh`.
+4. Text >= 50 chars: true when matches / counted tokens >= 0.25. Text < 50 chars: true when at least one token matches. The 50 matches `LEGACY_ENGLISH_MIN_LENGTH` and the audit's own length cutoff.
+
+Why it matters beyond mixed text: `bilingual_coverage_audit._source_nodes_requiring_coverage` and `translation_quality_audit` (inline-bilingual exemption) call `is_target_text` on the English source node. With any-match, a source paragraph that merely contains a Vietnamese name is skipped from coverage. Needs tests: short English sources with Vietnamese names and no `tgt` sibling must be flagged.
+
+Still to do from the advice: the 0.25 cutoff is checked against 11 real paragraphs by one translator; confirm on *Subtract* excerpts (3.4). `min_length_ratio` stays a separate Advise call in 3.6 (data floor 0.80, suggested 0.5-0.6). An exact-equality echo check (B) must be an actual audit check, not left to Grade.
