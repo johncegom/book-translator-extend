@@ -2,7 +2,7 @@
 
 Test book: *Subtract* (user, 2026-11-11). Alice fixtures are kept as-is.
 
-Status: 3.1-3.7 done; waiting for a PR and CI (DoD last item).
+Status: done 2026-11-11 (PR #7, CI green; unmerged).
 
 Depends on: Phase 2 (merged, PR #6, `71dc493`). Plan: `docs/plans/2026-11-11-vietnamese-language-profile.md`. Decisions to honour: DECISION-003 (50-char rule, echo check, ratio), DECISION-010 (letters plus function words; supersedes the letter rule in 003).
 
@@ -34,7 +34,7 @@ D. Mixed text (a single "Nguyễn" in an English paragraph): the plan says the s
 - [x] Coverage audit: fails a chapter left untranslated on purpose and passes a translated one (plan "done when"), asserted on the Vietnamese frozen fixture. **Done:** on the `vi` frozen fixture the coverage audit fails only the 10 chapters left untranslated (h-3 to h-12) and passes the title page and chapters 1-2 (snapshot `audit_output`, identical before and after Phase 3); the tiny-EPUB pair is also in `test_lang_profile_vi.py` and the new tests.
 - [x] Advise called before changing `is_target_text` and before setting the ratio/echo rules (CLAUDE.md triggers); calls logged in `docs/eagd-log.md`. **Done:** three calls logged: detector (opus), echo (opus), ratio (Fable, one-time user override).
 - [x] Regression: all existing tests untouched and green; zh-tw frozen snapshot identical to the `bb0eb35` baseline; `vi` fixture snapshot differs only where intended and the diff is explained here. **Done:** 626 -> 634 passed, 269 skipped; existing-test gate empty; zh-tw and vi snapshots identical to `bb0eb35` / `baseline_vi_phase2.json`, so there is no vi diff to explain.
-- [ ] CI green (ubuntu 3.10/3.12, windows 3.12). Ledger updated; tradeoffs to `docs/DECISIONS.md`, defects to `docs/BUGS.md`.
+- [x] CI green (ubuntu 3.10/3.12, windows 3.12; run 43033595597 on PR #7). Ledger updated; tradeoffs to `docs/DECISIONS.md`, defects to `docs/BUGS.md`.
 
 ## Test Plan
 
