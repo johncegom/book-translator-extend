@@ -82,6 +82,7 @@ def assemble(book_dir: Path, out_path: Path, strict_nav: bool = True) -> Path:
     warnings: list[str] = []
     replacements: dict[str, bytes] = {}
     compatibility_items: dict[str, bytes] = {}
+    split_parts: dict[str, list[str]] = {}  # BUG-001: rewritten segments of one original file, in order
     for entry in represented_entries:
         source_html = _read_entry_html(book_dir, entry, opf_path)
         translations = _translations_for_entry(book_dir, entry, translation_paths)
@@ -104,8 +105,14 @@ def assemble(book_dir: Path, out_path: Path, strict_nav: bool = True) -> Path:
             item_html, item_warnings = rewritten, []
         warnings.extend(item_warnings)
         warnings.extend(_missing_image_warnings(book_dir, entry, item_html))
-        replacements[_entry_original_path(entry, opf_path)] = item_html.encode("utf-8")
+        if entry.get("fragment_id"):
+            split_parts.setdefault(_entry_original_path(entry, opf_path), []).append(item_html)
+        else:
+            replacements[_entry_original_path(entry, opf_path)] = item_html.encode("utf-8")
         compatibility_items.update(_legacy_test_compat_items(opf_dir, source_html, entry, translations))
+
+    for original, parts in split_parts.items():
+        replacements[original] = _merge_split_parts(parts).encode("utf-8")
 
     item_nav_path = nav_builder.nav_path(manifest, opf_path)
     if item_nav_path:
@@ -204,6 +211,21 @@ def _translation_path(book_dir: Path, entry: dict) -> Path | None:
             return legacy_path
     return None
 
+def _merge_split_parts(parts: list[str]) -> str:
+    """Join the rewritten segments of one split file: head of the first, bodies in order."""
+    from bs4 import BeautifulSoup
+
+    merged = BeautifulSoup(parts[0], "html.parser")
+    body = merged.find("body")
+    if body is None:
+        return "".join(parts)
+    for html in parts[1:]:
+        other = BeautifulSoup(html, "html.parser").find("body")
+        if other is not None:
+            for child in list(other.contents):
+                body.append(child)
+    return str(merged)
+
 def _read_entry_html(book_dir: Path, entry: dict, opf_path: str | None) -> str:
     path = _source_html_path(book_dir, entry, opf_path)
     if path is None:
@@ -214,7 +236,8 @@ def _source_html_path(book_dir: Path, entry: dict, opf_path: str | None) -> Path
     candidates: list[Path] = []
     original_path_value = entry.get("original_path") or ""
     original_path = str(original_path_value)
-    if original_path:
+    # A split segment (BUG-001) lives only in its own chapters/ file, never in the whole original.
+    if original_path and not entry.get("fragment_id"):
         candidates.append(book_dir / _local_book_path(original_path, opf_path))
     href = str(entry.get("href") or "")
     if href:

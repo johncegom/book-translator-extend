@@ -90,3 +90,10 @@
 **Decision:** Option (a): `extract_epub.py` splits a spine file at the fragment targets that the NCX/nav lists for it. A spine file with no fragment targets stays one item, as today. Lands in its own PR before Phase 5, tested on a synthetic EPUB (the *Subtract* file is copyrighted and never committed).
 **Alternatives considered:** (b) a pre-split script: rewrites a whole EPUB and then extracts it a second time; (c) documenting the limit: leaves Phase 5 without its book.
 **Consequences:** Item names and counts change for EPUBs that have anchors, so existing frozen fixtures must be checked (Alice must stay at 14 items). `pdftohtml`-style mid-sentence paragraph splits are not addressed by this.
+
+## DECISION-014: BUG-001 splitting applies only to spine files of 60,000+ characters
+
+**Context:** A first version split every file with two or more TOC targets. On Alice that changed 3 front-matter and footer files (14 items became 17), which breaks the rule that the Alice fixtures and runs stay unchanged. The books that hit BUG-001 pack 100k+ characters into a file (*Subtract*: 97k, 106k, 157k); Alice's largest file is about 30k.
+**Decision:** `extract_epub._SPLIT_MIN_CHARS = 60000`: a file is split at its TOC targets only if its body text reaches that size (and has two usable targets in different top-level body children). Smaller files keep one item per file, byte for byte.
+**Alternatives considered:** Split every file with targets (changes Alice and every anchor-heavy EPUB); a per-item token budget (needs a tokenizer and a prompt-size model); a CLI flag (the user would have to know to pass it).
+**Consequences:** A 59k-character multi-chapter file is not split. The number is a judgment from two books, not a measured model limit. After splitting, *Subtract* has 23 items; the largest is chapter 4 at 84k characters, and `Notes` (77k) is still classified as a translate item. Both are Phase 5 questions. Known and unchecked: `patch_toc_ncx` matches entries to NCX points by file name, so the labels of the several NCX points of one split file may be wrong.

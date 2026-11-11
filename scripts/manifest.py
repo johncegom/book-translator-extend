@@ -30,11 +30,14 @@ class SpineEntry:
     translation_id: str | None = None
     parent_id: str | None = None
     reason: str | None = None
+    fragment_id: str | None = None
 
     def as_dict(self) -> dict:
         data = asdict(self)
         if data["reason"] is None:
             data.pop("reason")
+        if data["fragment_id"] is None:
+            data.pop("fragment_id")
         return data
 
 
@@ -129,6 +132,7 @@ def _entry_from_mapping(entry: dict, legacy: bool) -> SpineEntry:
         translation_id=None if translation_id is None else str(translation_id),
         parent_id=None if entry.get("parent_id") is None else str(entry.get("parent_id")),
         reason=None if entry.get("reason") is None else str(entry.get("reason")),
+        fragment_id=None if entry.get("fragment_id") is None else str(entry.get("fragment_id")),
     )
 
 
