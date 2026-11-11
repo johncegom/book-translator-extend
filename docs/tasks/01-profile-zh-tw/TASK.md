@@ -72,7 +72,7 @@ Fill because the change touches many files whose interaction is not obvious.
 
 ## Sub-tasks
 Conversion order is leaf first because `nav_builder` imports the rewriter's tables and `assemble` re-exports both. One commit per file; after each, run `pytest -q` and the frozen-book comparison. Open a draft PR after 1.2 so CI runs on every commit.
-- [ ] 1.1a Freeze a translated zh-tw book dir (translate Alice once, or hand-write `translations/*.json` for 2–3 chapters; add `state.json`), copy it, and record the member-hash and audit-output baseline, including the twice-on-unchanged-code stability check
+- [x] 1.1a Frozen zh-tw fixture built (option A, hand-written translations) and baseline recorded; see Notes. Files: `docs/tasks/01-profile-zh-tw/frozen-fixture/`
 - [ ] 1.1b Derive golden cases from the `bb0eb35` worktree and commit the characterization tests green before any code change
 - [ ] 1.2 Advise call for the Phase 1 field set; add `lang_profile.py` and the zh-tw profile (profile-API tests committed first, red)
 - [ ] 1.3 Convert consumers in this order: `paragraph_classification` → `bilingual_rewriter` → `nav_builder` → `opf_builder` → `assemble` → `bilingual_coverage_audit` and `translation_quality_audit` → `dispatch` (`build_subagent_prompt` only) → `glossary`
@@ -80,3 +80,8 @@ Conversion order is leaf first because `nav_builder` imports the rewriter's tabl
 
 ## Notes / deviations
 - Plan fix: the audit's length-rule default is 0.22 (`translation_quality_audit.py:80,95`), not 30%.
+- 1.1a (done): `frozen-fixture/` holds hand-written Traditional Chinese translations for an Alice excerpt (title page in full; chapters I and II as heading plus first 5 and 4 paragraphs), `state.json`, `glossary.json`, `translations_extra.json`, `build.py` and `snapshot.py`. Build and snapshot:
+  - `python docs/tasks/01-profile-zh-tw/frozen-fixture/build.py runs/alice/out/alice runs/alice/frozen`
+  - `python docs/tasks/01-profile-zh-tw/frozen-fixture/snapshot.py runs/alice/frozen runs/alice/alice.epub <snapshot.json>`
+  - Baseline (code identical to `bb0eb35`; `git diff bb0eb35 -- scripts` was empty): 22 zip members, audit_suite exit 1. Two runs on unchanged code produced byte-identical snapshots, so the comparison is stable. Local copy at `runs/alice/baseline_bb0eb35.json` (gitignored).
+  - The audit FAILs by design on this excerpt: `bilingual_coverage` reports the 10 untranslated chapters still carried in the output (about 600 lines), while `structural`, `translation_quality` and `href_resolve` PASS and the three translated items raise no coverage findings. That gives both a negative and a positive path; any change in that text is a regression signal.
