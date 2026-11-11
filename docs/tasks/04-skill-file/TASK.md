@@ -84,3 +84,15 @@ Correction to the draft finding 2: `state.init_state(book_path, spine, target_la
 - Prompt built from `state["target_lang"]`: 3788 chars, Vietnamese rules present, 0 Han characters.
 - `assemble.py` rc 0. `audit_suite.py`: structural PASS, translation_quality PASS, href_resolve PASS, bilingual_coverage FAIL only in the 10 files of chapters that have no translation (the fixture has 3 translated chapters); 0 failures inside translated chapters.
 - Side finding: BUG-005 (coverage failure text says "adjacent zh" for vi).
+
+## 4.6 Program design (BUG-001, chosen by the user 2026-11-12: "split items + assemble merge")
+
+Why more than the extractor: `assemble.py` writes one output file per `original_path` (`replacements[original_path] = item_html`), so two items from one file would overwrite each other. The design keeps the output EPUB's files as they are.
+
+- `extract_epub.py`: read the NCX (else the EPUB3 nav) and collect, per spine file, the fragment targets with their labels. A file is split only if at least two distinct targets land in different top-level children of `<body>`; otherwise nothing changes (one item, as today). Each segment is written to `chapters/item_NNN.html` as a full document (the original head plus its slice of the body). Item ids stay `item_{spine index + extra}`; `extra` grows by one per added segment, so an unsplit book keeps its ids byte for byte. The first segment also takes any content before the first target.
+- `manifest.py`: `SpineEntry.fragment_id: str | None = None`, left out of `as_dict()` when None, so unsplit manifests are unchanged. The NCX label is the heading fallback for a segment that has no heading tag.
+- `assemble.py`: a split entry reads its source from `href` (the segment), not from `original_path`; the rewritten segments of one original file are merged in order into that file's original document (head from the first segment, bodies concatenated); an unsplit entry follows the old path.
+- `nav_builder.py`: the nav `<a href>` of a split entry gets `#fragment_id`.
+- Known limit, not fixed here: `patch_toc_ncx` matches entries to NCX points by file name; with several entries per file all points of that file may get one label. It must not crash; logged as a bug if confirmed.
+
+Tests (synthetic EPUB, test-first, `test/test_phase4_bug001_split.py`): split into the right segments with text preserved; no split without fragments, with one fragment, or when the targets share one wrapper element (manifest has no `fragment_id` key); ids stable for unsplit books; assemble round trip puts every segment, source and translation, in order inside one original file; nav href carries the fragment; Alice extract is unchanged (existing golden tests plus a manifest comparison with `main`).
