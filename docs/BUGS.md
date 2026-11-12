@@ -76,6 +76,14 @@ Candidates from the Vietnamese plan, to log only if they actually occur: short-p
 **Options:** (a) find why `untranslated_reason` returns no reason on vi reference pages and fix it, with a test; (b) generate the exception from the manifest heading ("Reference materials", bibliography, notes) in assembly; (c) leave it and require a per-book `translations/source_only.json` (the workaround used: 234 entries generated from the reference pages and URL-only lines, each with a stated reason).
 **Status:** logged 2026-11-12; waiting for a decision. Not fixed in the skill. Worked around with a per-book `translations/source_only.json`.
 
+## BUG-010: `state.json` has no protection against concurrent writers
+
+**Symptom:** Not observed as data loss. In the first full vi run (2026-11-12, *System Design Interview*), up to five subagents each ran a helper that did `state.load` → `mark_done` → `state.save` on the same `state.json` at the same time. At the end all 108 translate items had both a translation file and status `done`, and a mid-run count matched the file count, so no update was lost in that run.
+**Root cause:** (read from the code) `state.save` in `scripts/state.py` is `json.dumps(...)` followed by a plain `write_text`: no file lock, no atomic replace and no merge with what is on disk. Two writers whose load-modify-save overlap leave only the last write; a reader that loads during a write can also see a truncated file and fail on invalid JSON. The skill's own flow has the main session call `mark_done` once per returned subagent, which serialises writes. The race was introduced by the run's helper script (`bt_finalize.py`, kept in the session scratchpad, not in the repo), which moved the call into each parallel agent.
+**Reachability:** Any run that updates `state.json` from more than one process at once: parallel finalize steps, or the concurrent-chapter option of the translator driver if it saves state from several workers. Not reachable through the documented sequential flow in `SKILL.md`. A lost update would show a finished item as `pending`, so resume would redo it and assembly would fail closed until fixed.
+**Options:** (a) hold a file lock around load-modify-save in the helper and write via a temp file and `os.replace`; (b) keep all `state.json` writes in the main session and have subagents only return results, as `SKILL.md` describes; (c) one small state file per item, merged when the run ends; (d) accept it and document that parallel writers are unsupported.
+**Status:** logged 2026-11-12 (user decision); waiting for a decision. Not fixed. If the helper is promoted into `scripts/` (Dream lesson 7 in `docs/eagd-lessons.md`), decide this first.
+
 <!--
 ## BUG-001: <short symptom>
 
