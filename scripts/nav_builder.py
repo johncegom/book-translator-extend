@@ -178,7 +178,21 @@ def patch_toc_ncx(ncx_xml: str, entries: list[dict], profile=None) -> str:
                 text_node = soup.new_tag("text")
                 nav_label.append(text_node)
             text_node.string = _nav_display_label(entry, None, profile)
+    _label_doc_title(soup, profile)
     return str(soup)
+
+
+def _label_doc_title(soup, profile=None) -> None:
+    """BUG-008: give the NCX docTitle the same edition label nav.xhtml's <title> already has."""
+    profile = ZH_TW if profile is None else profile
+    doc_title = soup.find("docTitle")
+    text_node = doc_title.find("text") if doc_title is not None else None
+    if text_node is None:
+        return
+    current = _clean_text(text_node.get_text())
+    suffix = f" ｜ {profile.bilingual_edition_label}"
+    if current and not current.endswith(suffix):
+        text_node.string = current + suffix
 
 
 def _render_nav_item(entry: dict, children: list[dict], nav_path: str, opf_dir: str, profile=None) -> str:

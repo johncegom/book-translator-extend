@@ -820,6 +820,19 @@ internal hrefs are not rewritten.
    load the same file from the EPUB to whitelist intentionally-English
    paragraphs like endnote citations).
 
+**Reference lists on pages with generic file names (BUG-009).** Assembly decides why a
+paragraph may stay in the source language from the page's file name and CSS class
+(`bibliography`, `references`, `notes`, `index`, `copyright` ...). A book whose files are
+named `part0005.html` gives it nothing to match, so correct reference lines
+(`[8] Title: https://...`) fail the coverage and quality audits as untranslated. For
+such a book, write `<book_dir>/translations/source_only.json` by hand before
+assembling: a list of `{"src_text": "<the English paragraph>", "reason": "bibliography: ..."}`
+entries. The reason must be non-empty (bare strings are ignored). Build it from the
+paragraphs of the reference pages that have no target-language sibling, read it, then
+assemble; assembly keeps your entries and adds its own. A listed paragraph also skips
+the echo check, so list only lines you have read. A heading-based exemption in the code
+was considered and declined (BUG-009, option 2).
+
 Assembly fails closed: any `translate` item missing its `item_NNN_translation.txt`
 is a hard error. Source-only pages are emitted without translation, and explicit
 drops require a reason.

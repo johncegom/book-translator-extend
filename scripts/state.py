@@ -22,12 +22,15 @@ Status values: "pending" | "in_progress" | "done" | "failed" | "source_ready" | 
 
 from __future__ import annotations
 
+from contextlib import contextmanager
 from dataclasses import dataclass
 import hashlib
 import json
+import os
+import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Iterable
+from typing import Callable, Iterable
 
 try:  # pragma: no cover - import mode depends on caller
     from . import manifest as manifest_module
@@ -181,11 +184,69 @@ def load(state_path: Path) -> dict | None:
 
 
 def save(state_path: Path, state: dict) -> None:
+    """Write state.json atomically (temp file + os.replace), so a reader never sees half a file.
+
+    This alone does not stop two writers from overwriting each other's update; use `update`
+    for any read-modify-write that can run in parallel (BUG-010).
+    """
     validate_state(state, require_strategy=False)
     state_path.parent.mkdir(parents=True, exist_ok=True)
-    state_path.write_text(
-        json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
+    text = json.dumps(state, ensure_ascii=False, indent=2)
+    tmp = state_path.with_name(f".{state_path.name}.{os.getpid()}.tmp")
+    try:
+        tmp.write_text(text, encoding="utf-8")
+        os.replace(tmp, state_path)
+    finally:
+        if tmp.exists():
+            tmp.unlink()
+
+
+_LOCK_TIMEOUT_SECONDS = 30.0
+_LOCK_STALE_SECONDS = 60.0
+
+
+@contextmanager
+def _locked(state_path: Path):
+    """Exclusive lock via a sibling `<name>.lock` file created with O_EXCL (portable, no fcntl)."""
+    lock = state_path.with_name(state_path.name + ".lock")
+    deadline = time.monotonic() + _LOCK_TIMEOUT_SECONDS
+    while True:
+        try:
+            fd = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+            os.close(fd)
+            break
+        except (FileExistsError, PermissionError):
+            # Windows reports a lock that another process is deleting right now as PermissionError.
+            try:
+                if time.time() - lock.stat().st_mtime > _LOCK_STALE_SECONDS:
+                    lock.unlink()  # left behind by a killed process
+                    continue
+            except (FileNotFoundError, PermissionError):
+                pass
+            if time.monotonic() > deadline:
+                raise TimeoutError(f"could not lock {state_path} within {_LOCK_TIMEOUT_SECONDS:.0f}s")
+            time.sleep(0.01)
+    try:
+        yield
+    finally:
+        try:
+            lock.unlink()
+        except FileNotFoundError:
+            pass
+
+
+def update(state_path: Path, mutate: Callable[[dict], object]) -> dict:
+    """Locked load -> mutate(state) -> save; returns the new state. Safe from parallel processes.
+
+    Raises FileNotFoundError when state.json does not exist (it never creates one).
+    """
+    with _locked(state_path):
+        current = load(state_path)
+        if current is None:
+            raise FileNotFoundError(state_path)
+        mutate(current)
+        save(state_path, current)
+        return current
 
 
 def validate_state(state: dict, require_strategy: bool = False) -> None:
