@@ -52,6 +52,14 @@ Candidates from the Vietnamese plan, to log only if they actually occur: short-p
 **Options:** (a) in the payload step, decide the strategy per paragraph by the spine entry (fragment) the paragraph came from, not per file; (b) have the rewriter record exceptions while it rewrites each entry and pass them up; (c) leave as is and translate `Notes` (cost about a sixth of the run) so nothing is source-only.
 **Status:** logged 2026-11-12; fix approved by the user the same day and made test-first in PR #15 (`fix/bug-006-split-source-only`, 3 new tests, 671 passed). On the real run the failing lines dropped from about 1,200 to 24. **FIXED** 2026-11-12: PR #15 merged.
 
+## BUG-007: NCX table of contents is mostly English-only for books with split files
+
+**Symptom:** Phase 5 Kindle read-back (user, 2026-11-12): the table of contents shows one language, not bilingual. In `runs/subtract/subtract_bilingual.epub`, `nav.xhtml` is fully bilingual but `toc.ncx` has 22 labels and only 3 are bilingual.
+**Root cause:** (read from the code and confirmed on the output) `patch_toc_ncx` in `scripts/nav_builder.py` matches NCX points to spine entries by file name only. After the BUG-001 split several entries share one file, `_nav_entry_by_filename` keeps the first entry per file, and `patch_toc_ncx` patches only the first fragment point of each file. The other points keep their English text. DECISION-013 listed this as "known and unchecked".
+**Reachability:** Any book with split files read in a reader that prefers the NCX (Kindle does). Alice has no split files, so no existing test covers it.
+**Options:** (a) key entries by file name plus `fragment_id` and patch every NCX point whose target has a matching entry; (b) regenerate the whole NCX from the same entry list that builds `nav.xhtml`; (c) leave as is and document that Kindle shows the English-only NCX.
+**Status:** logged 2026-11-12; waiting for the user's decision. No fix applied.
+
 <!--
 ## BUG-001: <short symptom>
 

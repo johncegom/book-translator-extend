@@ -1,6 +1,6 @@
 # Task Ledger
 
-Current status: Phases 0-4 done and merged. Phase 5 (one full book, *Subtract*) is in progress: all 16 items translated, audits accepted (DECISION-015), BUG-006 fixed (PR #15 merged); fresh-session check done; waiting only for the user's Kindle read-back (or a written waiver).
+Current status: Phases 0-4 done and merged. Phase 5 (one full book, *Subtract*) is in progress: all 16 items translated, audits accepted (DECISION-015), BUG-006 fixed (PR #15 merged); fresh-session check done; Kindle read-back found BUG-007 (NCX table of contents not bilingual); waiting for the user's decision on the fix.
 
 Plan and rationale: `docs/plans/2026-11-11-vietnamese-language-profile.md`. This ledger tracks status only; a phase's DoD, test plan and notes live in its detail doc.
 
@@ -11,7 +11,7 @@ Plan and rationale: `docs/plans/2026-11-11-vietnamese-language-profile.md`. This
 | 2 | Vietnamese profile | done 2026-11-11 | PR #6 merged (`71dc493`); 547 passed / 269 skipped | `docs/tasks/02-profile-vi/TASK.md` |
 | 3 | Detector and audits | done 2026-11-11 | PR #7 merged; CI run 43033595597 green, 634 passed / 269 skipped | `docs/tasks/03-detector-audits/TASK.md` |
 | 4 | Skill file | done 2026-11-12 | PRs #9 and #11 merged; CI run 43069367924 green on ubuntu 3.10/3.12 and windows 3.12, 668 passed / 269 skipped | `docs/tasks/04-skill-file/TASK.md` |
-| 5 | One full book | in progress (translation, audits, recalibration done 2026-11-12; fresh-session check done 2026-11-12 on *A Modest Proposal*, 4 of 4 PASS; Kindle read-back pending) | PR #13, #14 (docs), #15 (BUG-006 fix) | `docs/tasks/05-full-book/TASK.md` |
+| 5 | One full book | in progress (translation, audits, recalibration done 2026-11-12; fresh-session check done 2026-11-12 on *A Modest Proposal*, 4 of 4 PASS; Kindle read-back done, BUG-007 open) | PR #13, #14 (docs), #15 (BUG-006 fix) | `docs/tasks/05-full-book/TASK.md` |
 
 Status values: not started / in progress / blocked / done. A phase is `done` only when its detail doc's Definition of Done is fully checked, and the Evidence cell links the PR or commit.
 
