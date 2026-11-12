@@ -94,7 +94,8 @@ def _para(matching: int, other: int) -> str:
     return " ".join(["ăn"] * matching + ["background"] * other)
 
 
-def test_share_rule_cutoff_is_a_quarter_of_the_lowercase_tokens():
+def test_share_rule_two_in_eight_passes_and_one_in_eight_fails():
+    # Originally pinned the 0.25 cutoff; DECISION-016 moved it to 0.20 and both cases stay on the same side.
     two_in_eight = _para(2, 6)          # share 0.25, >= 50 chars
     one_in_eight = _para(1, 7)          # share 0.125
     assert len(two_in_eight) >= 50 and len(one_in_eight) >= 50

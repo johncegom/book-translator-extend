@@ -60,6 +60,30 @@ Candidates from the Vietnamese plan, to log only if they actually occur: short-p
 **Options:** (a) key entries by file name plus `fragment_id` and patch every NCX point whose target has a matching entry; (b) regenerate the whole NCX from the same entry list that builds `nav.xhtml`; (c) leave as is and document that Kindle shows the English-only NCX.
 **Status:** logged 2026-11-12; fix approved by the user (option a, the smallest change) and made test-first in PR #17. Real run: NCX labels bilingual 3 of 22 before, 21 of 22 after (the book title is the one left). **FIXED** 2026-11-12; user confirmed on Kindle.
 
+## BUG-008: A technical vi book keeps a few English-only labels in the output EPUB
+
+**Symptom:** Grade (haiku, 2026-11-12) on the full run of *System Design Interview* (`bt-out/…_bilingual_vi.epub`) failed one rubric line, criterion (e), for metadata only: `titlepage.xhtml` shows the bare English text "Cover" (the Vietnamese profile label is "Bìa"); `toc.ncx` `docTitle` is English-only; one nav label had an English-only gloss ("Data centers ｜ Data center"); and the nav label for the source table-of-contents page is a garbled concatenation ("Table of Contents System Design Interview: An Insider's Guide FOREWORD CHAPTER 1 ｜ Mục lục"). Body paragraphs were not affected.
+**Root cause:** unknown for the title page "Cover" text and the garbled label (not investigated; the title-page item is a `source_only` image page and the garbled label looks like the manifest `first_heading` of the source TOC page being used verbatim). The `docTitle` is the leftover already noted under BUG-007 ("the book title is the one left"). The "Data centers" label was our own glossary choice, fixed as book data.
+**Reachability:** Any vi book. Cosmetic, in navigation metadata only.
+**Options:** (a) fix in the assembler: translate or gloss the title-page text and `docTitle` from the profile's labels or the glossary, and give the source TOC page a profile label instead of its heading text; (b) leave and fix per book through `translations_extra.json`; (c) accept.
+**Status:** logged 2026-11-12; waiting for a decision. Not fixed in the skill. The "Data centers" label was changed in this book's `translations_extra.json` only.
+
+## BUG-009: Reference-list and URL paragraphs are not exempted automatically in a vi book
+
+**Symptom:** In the first full run of a technical vi book, the coverage and quality audits reported about 320 failure lines, around 150 of them bibliography entries and URL lines that are correctly identical to the English source ("[8] Single point of failure: https://…", chapter 16 lists of articles, blogs and books). The audits only exempt such paragraphs when assembly writes an explicit `{src_text, reason}` entry into `source_only.json`; assembly generated none for these pages.
+**Root cause:** unknown. `assemble.py` builds exceptions through `paragraph_classification.untranslated_reason`, which apparently returned no reason for these paragraphs under the vi profile (the `Reference materials` pages exist in the manifest). Not investigated further; worked around by hand.
+**Reachability:** Any vi book with a reference section (very likely all non-fiction). Observed once, on this book. No test covers it for vi.
+**Options:** (a) find why `untranslated_reason` returns no reason on vi reference pages and fix it, with a test; (b) generate the exception from the manifest heading ("Reference materials", bibliography, notes) in assembly; (c) leave it and require a per-book `translations/source_only.json` (the workaround used: 234 entries generated from the reference pages and URL-only lines, each with a stated reason).
+**Status:** logged 2026-11-12; waiting for a decision. Not fixed in the skill. Worked around with a per-book `translations/source_only.json`.
+
+## BUG-010: `state.json` has no protection against concurrent writers
+
+**Symptom:** Not observed as data loss. In the first full vi run (2026-11-12, *System Design Interview*), up to five subagents each ran a helper that did `state.load` → `mark_done` → `state.save` on the same `state.json` at the same time. At the end all 108 translate items had both a translation file and status `done`, and a mid-run count matched the file count, so no update was lost in that run.
+**Root cause:** (read from the code) `state.save` in `scripts/state.py` is `json.dumps(...)` followed by a plain `write_text`: no file lock, no atomic replace and no merge with what is on disk. Two writers whose load-modify-save overlap leave only the last write; a reader that loads during a write can also see a truncated file and fail on invalid JSON. The skill's own flow has the main session call `mark_done` once per returned subagent, which serialises writes. The race was introduced by the run's helper script (`bt_finalize.py`, kept in the session scratchpad, not in the repo), which moved the call into each parallel agent.
+**Reachability:** Any run that updates `state.json` from more than one process at once: parallel finalize steps, or the concurrent-chapter option of the translator driver if it saves state from several workers. Not reachable through the documented sequential flow in `SKILL.md`. A lost update would show a finished item as `pending`, so resume would redo it and assembly would fail closed until fixed.
+**Options:** (a) hold a file lock around load-modify-save in the helper and write via a temp file and `os.replace`; (b) keep all `state.json` writes in the main session and have subagents only return results, as `SKILL.md` describes; (c) one small state file per item, merged when the run ends; (d) accept it and document that parallel writers are unsupported.
+**Status:** logged 2026-11-12 (user decision); waiting for a decision. Not fixed. If the helper is promoted into `scripts/` (Dream lesson 7 in `docs/eagd-lessons.md`), decide this first.
+
 <!--
 ## BUG-001: <short symptom>
 

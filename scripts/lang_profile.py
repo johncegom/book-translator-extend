@@ -202,9 +202,17 @@ _VI_DISTINCTIVE_RE = re.compile(
 )
 # Function words with no distinctive letter, needed for short text ("Xin chào", "Tôi và em").
 # "em" (Portuguese), "là" (French) and "anh" (English "Anh") are left out on purpose.
-_VI_FUNCTION_WORDS = frozenset({"và", "không", "tôi", "xin", "chào", "các", "này"})
+_VI_FUNCTION_WORDS = frozenset({
+    "và", "không", "tôi", "xin", "chào", "các", "này",
+    # DECISION-016: ordinary grammar words whose letters are all shared with French/Portuguese, so the
+    # letter rule never sees them. None is a lowercase word of English, French, Portuguese or Spanish.
+    "cho", "trong", "ngay", "phía", "nào", "thành", "khi", "chúng", "nên", "vào", "thì", "mà", "sau", "nhau",
+})
 _VI_SHORT_TEXT_MAX = 50  # LEGACY_ENGLISH_MIN_LENGTH: below it any match counts, from it the share rule applies
-_VI_MIN_SHARE = 0.25  # DECISION-010 / TASK.md 3.3: real Vietnamese 0.45-0.79, English with a name <= 0.17
+# DECISION-016: a paragraph needs one match per _VI_MIN_SHARE_DENOMINATOR lowercase tokens (a fifth), written as
+# integers because real lines sit exactly on the boundary (2/10, 1/5). English source text scores 0.00 on both
+# measured books; English-heavy technical Vietnamese has a floor near 0.14.
+_VI_MIN_SHARE_DENOMINATOR = 5
 
 
 def _vi_token_matches(token: str) -> bool:
@@ -216,8 +224,8 @@ def _vi_is_target_text(text: str) -> bool:
 
     Count only lowercase-initial tokens, because capitalised proper nouns are what fool the
     check in both directions; with no lowercase-initial token (a Title Case heading or a lone
-    name) count every token. Text of 50+ characters needs a quarter of the counted tokens to
-    match; shorter text needs one.
+    name) count every token. Text of 50+ characters needs a fifth of the counted tokens to
+    match (DECISION-016); shorter text needs one.
     """
     text = unicodedata.normalize("NFC", text).strip()
     tokens = [t for t in re.findall(r"\w+", text) if not t.isdigit()]
@@ -227,7 +235,7 @@ def _vi_is_target_text(text: str) -> bool:
     matches = sum(1 for t in counted if _vi_token_matches(t))
     if len(text) < _VI_SHORT_TEXT_MAX:
         return matches >= 1
-    return matches / len(counted) >= _VI_MIN_SHARE
+    return matches * _VI_MIN_SHARE_DENOMINATOR >= len(counted)
 
 
 VI = LanguageProfile(
