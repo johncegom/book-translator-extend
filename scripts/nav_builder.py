@@ -127,8 +127,28 @@ def patch_toc_ncx(ncx_xml: str, entries: list[dict], profile=None) -> str:
         src = str(content.get("src") or "") if content is not None else ""
         return posixpath.basename(unquote(src.split("#", 1)[0].split("?", 1)[0]))
 
+    # Entries from a split file (BUG-001) are matched by file name plus fragment (BUG-007).
+    entry_by_target = {
+        (posixpath.basename(unquote(str(e.get("original_path") or ""))), str(e["fragment_id"])): e
+        for e in entries
+        if e.get("fragment_id") and e.get("original_path")
+        and e.get("output_strategy") not in {"drop_explicit", "nav_generated"} and e.get("role") != "nav"
+    }
+    patched: set[int] = set()
+    for navpoint in soup.find_all("navPoint"):
+        content = navpoint.find("content", recursive=False)
+        fragment = str(content.get("src") or "").partition("#")[2] if content is not None else ""
+        entry = entry_by_target.get((target_filename(navpoint), fragment)) if fragment else None
+        text_node = navpoint.find("navLabel", recursive=False)
+        text_node = text_node.find("text", recursive=False) if text_node is not None else None
+        if entry is not None and text_node is not None:
+            text_node.string = _nav_display_label(entry, None, profile)
+            patched.add(id(navpoint))
+
     navpoints_by_filename: dict[str, dict[str, list]] = {}
     for navpoint in soup.find_all("navPoint"):
+        if id(navpoint) in patched:
+            continue
         filename = target_filename(navpoint)
         if not filename:
             continue
