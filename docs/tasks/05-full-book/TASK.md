@@ -47,7 +47,7 @@ H. **Fresh-session check (moved here from Phase 4).** The user runs the skill on
 - [x] (user accepted, DECISION-015) `assemble.py` succeeds; `audit_suite` shows structural and href PASS, and one line each in bilingual_coverage and translation_quality (the two false positives listed in Results). `assemble.py` needed the BUG-006 fix (PR #15) first. 4 of 4 PASS (amber WARN is allowed only if each warning is listed here and judged harmless).
 - [x] Recalibration table filled in from the real data (ratio distribution, detector false-negative count, warnings). Any threshold change has an Advise log row and a DECISIONS entry; "no change" is stated with n.
 - [ ] User read-back done on one early and one late chapter, the table of contents and a split chapter boundary; findings recorded (what was wrong, what was fine).
-- [ ] Fresh-session check done by the user, or explicitly waived by them in writing in this doc.
+- [x] Fresh-session check done by the user (2026-11-12, stated by the user in chat: the *A Modest Proposal* smoke run counts as the fresh-session check). Manual fixes needed: `python3` is not on this Windows machine (use `python`), and `PYTHONIOENCODING=utf-8` before printing Vietnamese. Details under Results.
 - [x] Copyright guard (`git ls-files runs` is 0; no epub of the book; no excerpts in the docs): `git ls-files` lists nothing under `runs/`, no `.epub` of the book, and no committed excerpt longer than a sentence from the book or its translation.
 - [ ] Bugs found are in `docs/BUGS.md`; tradeoffs in `docs/DECISIONS.md`; a lesson that passes the generalisation test in `docs/RETRO.md`; Alice and zh-tw tests unchanged (`pytest -q` green, existing-test gate command empty); CI green; ledger updated with PR links.
 
@@ -73,7 +73,7 @@ Phase 5 is a run, so the checks are commands on the output, plus the existing su
 - [x] 5.4b BUG-006 found by the first audit, fixed in PR #15 (user chose the code fix)
 - [~] 5.5 Assemble and four audits (E): assembled; 2 of 4 PASS, see Results (not yet 4 of 4)
 - [~] 5.6 Recalibration with `measure.py` (F): numbers recorded, Advise done, no threshold change; waiting for the user's call on 4 of 4
-- [ ] 5.7 User read-back and fresh-session check (G, H)
+- [~] 5.7 User read-back and fresh-session check (G, H): fresh-session check done 2026-11-12 (user-confirmed); Kindle read-back still pending
 - [ ] 5.8 Retro, ledger, PR merges, verify DoD (Dream done; bugs and decisions logged)
 
 ## Risks
@@ -119,3 +119,11 @@ Phase 5 is a run, so the checks are commands on the output, plus the existing su
 - **`measure.py` over 1,461 translated paragraphs (1,268 of 50+ source characters):** length ratio min 0.571, p1 0.691, p5 0.801, median 0.984, 1 below 0.60. Detector share on the translations: min 0.231, p1 0.395, p5 0.492, median 0.627; `is_target_text` false for 1 paragraph of 50+ (share 0.231) and 64 of the shorter ones. Detector share over the English source: max 0.000, 0 of 1,268 at or above 0.17. Paragraphs of 50+ without terminal punctuation: 202 in the translation, 198 in the source (the page-break fragments of fact 3; the translator kept them as fragments).
 - **Recalibration verdict:** 0.60 length ratio and 0.25 detector share confirmed on n = 1,268, no change. Advise (opus, logged) said keep 0.25: the one false negative is a correct 53-character sentence of short Latin-1-accent syllables (3 of 13 counted tokens match); lowering the cutoff later is possible because the English side is empty above 0, but it needs its own change with an Advise call and a DECISIONS entry, not tuning to this paragraph. The 0.57 paragraph is a correct, concise translation; neither paragraph was reworded to pass.
 - **Grade (haiku) findings, all judged not translation defects:** (b) failed only on list labels like "1." (rubric tightened to 50+ characters after the pilot); (c) glossary misses: the Potbelly Hill misses are the Vietnamese name used without the first-mention gloss in parentheses, and the Anthropocene misses are the same shape. The glossary value carries a gloss meant for the first mention; the check wants it every time. (a) one item hit the detector false negative; (d) one item hit the 0.57 paragraph.
+
+### 5.7 Fresh-session check (2026-11-12, user-confirmed)
+
+- Run: *A Modest Proposal* (public domain, 3 spine items, 50 translated paragraphs), skill 1.4.0 from `~/.claude/skills/book-translator/`, `target_lang` vi. Caveat recorded: the session already had this repo's CLAUDE.md loaded and the book is not *Subtract*; the user chose to count it anyway.
+- Result: extract, state, glossary (inline), tone gate, one Sonnet subagent for the 39-paragraph item (0 retries), assemble, 4 of 4 audits PASS, Grade 5 of 5 (min length ratio 0.82). Grade found 3 minor wording issues; 2 fixed by one-string edits, re-audited 4 of 4.
+- Needed a manual fix: (1) `python3` not found in the Bash tool on Windows, used `python`; (2) set `PYTHONIOENCODING=utf-8` for scripts that print Vietnamese. Neither is fixed in `SKILL.md`; whether to change its commands is the user's call.
+- Observation, not a defect decision: the item holding the essay also holds about 18k characters of Project Gutenberg licence text classed `translate`; it was translated.
+
