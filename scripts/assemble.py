@@ -83,6 +83,7 @@ def assemble(book_dir: Path, out_path: Path, strict_nav: bool = True) -> Path:
     replacements: dict[str, bytes] = {}
     compatibility_items: dict[str, bytes] = {}
     split_parts: dict[str, list[str]] = {}  # BUG-001: rewritten segments of one original file, in order
+    rewritten_bodies: list[tuple[str, dict, str]] = []  # (file key, entry, html) per entry, for BUG-006
     for entry in represented_entries:
         source_html = _read_entry_html(book_dir, entry, opf_path)
         translations = _translations_for_entry(book_dir, entry, translation_paths)
@@ -105,6 +106,7 @@ def assemble(book_dir: Path, out_path: Path, strict_nav: bool = True) -> Path:
             item_html, item_warnings = rewritten, []
         warnings.extend(item_warnings)
         warnings.extend(_missing_image_warnings(book_dir, entry, item_html))
+        rewritten_bodies.append((_entry_original_path(entry, opf_path), entry, item_html))
         if entry.get("fragment_id"):
             split_parts.setdefault(_entry_original_path(entry, opf_path), []).append(item_html)
         else:
@@ -138,7 +140,7 @@ def assemble(book_dir: Path, out_path: Path, strict_nav: bool = True) -> Path:
                     profile,
                 ).encode("utf-8")
 
-    _emit_translations_payload(book_dir, replacements, compatibility_items, opf_dir, represented_entries, profile)
+    _emit_translations_payload(book_dir, rewritten_bodies, compatibility_items, opf_dir, profile)
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     if source_epub.is_file():
@@ -284,10 +286,9 @@ def _legacy_test_compat_items(
 
 def _emit_translations_payload(
     book_dir: Path,
-    replacements: dict[str, bytes],
+    rewritten_bodies: list[tuple[str, dict, str]],
     compatibility_items: dict[str, bytes],
     opf_dir: str,
-    represented_entries: list[dict],
     profile=None,
 ) -> None:
     """Bundle translations metadata and reasoned source-only exceptions.
@@ -323,17 +324,13 @@ def _emit_translations_payload(
                 seen.add(clean_text)
                 exceptions.append({"src_text": clean_text, "reason": reason})
 
-    entry_by_basename = {
-        posixpath.basename(entry.get("original_path") or entry.get("href") or ""): entry
-        for entry in represented_entries
-        if entry.get("output_strategy") in {"source_only", "translate"}
-    }
-    entry_by_basename.pop("", None)
-    for key, body in replacements.items():
-        entry = entry_by_basename.get(posixpath.basename(key))
-        if entry is None:
-            continue
+    # One pass per spine entry, on that entry's own rewritten html. Several entries can share
+    # one output file after the BUG-001 split; judging the merged file by a single entry
+    # (BUG-006) applied the wrong strategy to every other segment.
+    for key, entry, body in rewritten_bodies:
         strategy = entry.get("output_strategy")
+        if strategy not in {"source_only", "translate"}:
+            continue
         soup = BeautifulSoup(body, "html.parser")
         for src_node in soup.find_all(
             class_=lambda v: bool(v) and "src" in (v if isinstance(v, list) else str(v).split())
