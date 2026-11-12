@@ -60,6 +60,22 @@ Candidates from the Vietnamese plan, to log only if they actually occur: short-p
 **Options:** (a) key entries by file name plus `fragment_id` and patch every NCX point whose target has a matching entry; (b) regenerate the whole NCX from the same entry list that builds `nav.xhtml`; (c) leave as is and document that Kindle shows the English-only NCX.
 **Status:** logged 2026-11-12; fix approved by the user (option a, the smallest change) and made test-first in PR #17. Real run: NCX labels bilingual 3 of 22 before, 21 of 22 after (the book title is the one left). **FIXED** 2026-11-12; user confirmed on Kindle.
 
+## BUG-008: A technical vi book keeps a few English-only labels in the output EPUB
+
+**Symptom:** Grade (haiku, 2026-11-12) on the full run of *System Design Interview* (`bt-out/…_bilingual_vi.epub`) failed one rubric line, criterion (e), for metadata only: `titlepage.xhtml` shows the bare English text "Cover" (the Vietnamese profile label is "Bìa"); `toc.ncx` `docTitle` is English-only; one nav label had an English-only gloss ("Data centers ｜ Data center"); and the nav label for the source table-of-contents page is a garbled concatenation ("Table of Contents System Design Interview: An Insider's Guide FOREWORD CHAPTER 1 ｜ Mục lục"). Body paragraphs were not affected.
+**Root cause:** unknown for the title page "Cover" text and the garbled label (not investigated; the title-page item is a `source_only` image page and the garbled label looks like the manifest `first_heading` of the source TOC page being used verbatim). The `docTitle` is the leftover already noted under BUG-007 ("the book title is the one left"). The "Data centers" label was our own glossary choice, fixed as book data.
+**Reachability:** Any vi book. Cosmetic, in navigation metadata only.
+**Options:** (a) fix in the assembler: translate or gloss the title-page text and `docTitle` from the profile's labels or the glossary, and give the source TOC page a profile label instead of its heading text; (b) leave and fix per book through `translations_extra.json`; (c) accept.
+**Status:** logged 2026-11-12; waiting for a decision. Not fixed in the skill. The "Data centers" label was changed in this book's `translations_extra.json` only.
+
+## BUG-009: Reference-list and URL paragraphs are not exempted automatically in a vi book
+
+**Symptom:** In the first full run of a technical vi book, the coverage and quality audits reported about 320 failure lines, around 150 of them bibliography entries and URL lines that are correctly identical to the English source ("[8] Single point of failure: https://…", chapter 16 lists of articles, blogs and books). The audits only exempt such paragraphs when assembly writes an explicit `{src_text, reason}` entry into `source_only.json`; assembly generated none for these pages.
+**Root cause:** unknown. `assemble.py` builds exceptions through `paragraph_classification.untranslated_reason`, which apparently returned no reason for these paragraphs under the vi profile (the `Reference materials` pages exist in the manifest). Not investigated further; worked around by hand.
+**Reachability:** Any vi book with a reference section (very likely all non-fiction). Observed once, on this book. No test covers it for vi.
+**Options:** (a) find why `untranslated_reason` returns no reason on vi reference pages and fix it, with a test; (b) generate the exception from the manifest heading ("Reference materials", bibliography, notes) in assembly; (c) leave it and require a per-book `translations/source_only.json` (the workaround used: 234 entries generated from the reference pages and URL-only lines, each with a stated reason).
+**Status:** logged 2026-11-12; waiting for a decision. Not fixed in the skill. Worked around with a per-book `translations/source_only.json`.
+
 <!--
 ## BUG-001: <short symptom>
 
