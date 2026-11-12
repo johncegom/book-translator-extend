@@ -21,6 +21,7 @@ Append one row per event at the end of its table. A single line per row, no line
 | 2026-11-11 | advise | Agent | — | opus (claude-opus-5-5) | initial install, probe ok |
 | 2026-11-11 | grade | Agent | — | haiku (claude-haiku-5-5) | initial install, probe ok |
 | 2026-11-11 | dream | Agent | — | haiku (claude-haiku-5-5) | initial install, probe ok |
+| 2026-11-12 | dream | Agent | haiku (claude-haiku-5-5) | opus (claude-opus-5-5), effort=medium | user request; probe with effort=medium returned claude-opus-5-5 |
 
 ## Grade fallbacks
 

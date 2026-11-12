@@ -40,7 +40,7 @@ Rationale: `docs/execute-advise-grade-dream.md`. Each role is a separate sub-age
 <!-- eagd-bindings:start -->
 eagd-binding: role=advise tool=Agent model=opus status=ok probed=2026-11-11 reported=claude-opus-5-5
 eagd-binding: role=grade tool=Agent model=haiku status=ok probed=2026-11-11 reported=claude-haiku-5-5
-eagd-binding: role=dream tool=Agent model=haiku status=ok probed=2026-11-11 reported=claude-haiku-5-5
+eagd-binding: role=dream tool=Agent model=opus effort=medium status=ok probed=2026-11-12 reported=claude-opus-5-5
 <!-- eagd-bindings:end -->
 
 **EAGD log:** `docs/eagd-log.md`
