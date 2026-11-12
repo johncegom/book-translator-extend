@@ -97,3 +97,11 @@
 **Decision:** `extract_epub._SPLIT_MIN_CHARS = 60000`: a file is split at its TOC targets only if its body text reaches that size (and has two usable targets in different top-level body children). Smaller files keep one item per file, byte for byte.
 **Alternatives considered:** Split every file with targets (changes Alice and every anchor-heavy EPUB); a per-item token budget (needs a tokenizer and a prompt-size model); a CLI flag (the user would have to know to pass it).
 **Consequences:** A 59k-character multi-chapter file is not split. The number is a judgment from two books, not a measured model limit. After splitting, *Subtract* has 23 items; the largest is chapter 4 at 84k characters, and `Notes` (77k) is still classified as a translate item. Both are Phase 5 questions. Known and unchecked: `patch_toc_ncx` matches entries to NCX points by file name, so the labels of the several NCX points of one split file may be wrong.
+
+## DECISION-015: Phase 5 accepts two audit lines as measured false positives instead of retuning (2026-11-12)
+
+**Context:** After the BUG-006 fix the full-book output has 2 PASS and 2 FAIL, one line each: a correct 53-character Vietnamese sentence rejected by `is_target_text` (share 0.231, cutoff 0.25) and a correct concise translation at length ratio 0.571 (threshold 0.60). Each is 1 paragraph of 1,268 (0.08%). Advise (opus, logged) said to keep both thresholds, not reword, and measure the English side first; the English-source share is 0.000 for all 1,268 paragraphs.
+**Decision:** Keep thresholds and text. The user chose "accept as documented": the DoD item "4 of 4 PASS" is met apart from these two listed lines.
+**Alternatives considered:** lower the cutoffs now (needs its own Advise and decision, and the 0.60 ratio has no English-side check at all); reword the two paragraphs (tunes the output to the check); keep the DoD strict and leave Phase 5 open.
+**Consequences:** A long Vietnamese book can show about one false FAIL per 1,000 paragraphs on each of the two checks. If a later book shows a rate above this, revisit the cutoffs from both distributions.
+
