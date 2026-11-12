@@ -58,7 +58,7 @@ Candidates from the Vietnamese plan, to log only if they actually occur: short-p
 **Root cause:** (read from the code and confirmed on the output) `patch_toc_ncx` in `scripts/nav_builder.py` matches NCX points to spine entries by file name only. After the BUG-001 split several entries share one file, `_nav_entry_by_filename` keeps the first entry per file, and `patch_toc_ncx` patches only the first fragment point of each file. The other points keep their English text. DECISION-013 listed this as "known and unchecked".
 **Reachability:** Any book with split files read in a reader that prefers the NCX (Kindle does). Alice has no split files, so no existing test covers it.
 **Options:** (a) key entries by file name plus `fragment_id` and patch every NCX point whose target has a matching entry; (b) regenerate the whole NCX from the same entry list that builds `nav.xhtml`; (c) leave as is and document that Kindle shows the English-only NCX.
-**Status:** logged 2026-11-12; waiting for the user's decision. No fix applied.
+**Status:** logged 2026-11-12; fix approved by the user (option a, the smallest change) and made test-first in PR #17. Real run: NCX labels bilingual 3 of 22 before, 21 of 22 after (the book title is the one left). **FIXED** 2026-11-12; user confirmed on Kindle.
 
 <!--
 ## BUG-001: <short symptom>
