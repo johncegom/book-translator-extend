@@ -200,3 +200,18 @@ def test_source_only_segment_of_a_split_file_gets_its_exceptions(tmp_path, frag,
     for other in CH:
         if other != name:
             assert _para(other, 1) not in texts and _para(other, 2) not in texts
+
+
+def test_every_ncx_point_of_a_split_file_gets_a_bilingual_label(tmp_path):
+    """BUG-007: only the first NCX point of a split file used to be patched."""
+    import re
+    book, m = _extract(tmp_path, points=THREE)
+    _translate_all(book, m)
+    out = tmp_path / "out.epub"
+    assemble.assemble(book, out)
+    with zipfile.ZipFile(out) as z:
+        ncx = z.read("OEBPS/toc.ncx").decode("utf-8")
+    points = re.findall(r'<text>([^<]*)</text>\s*</navLabel>\s*<content src="([^"]*)"', ncx)
+    labels = {src: text for text, src in points}
+    for frag in ("p1", "p2", "p3"):
+        assert "｜" in labels[f"b.xhtml#{frag}"], labels
