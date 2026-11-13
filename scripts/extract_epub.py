@@ -141,6 +141,7 @@ def extract(
             units.append((index + extra, src_idref, linear, item, opf_item, src_href, fragment_id, toc_label, seg_html))
 
     entries: list[SpineEntry] = []
+    skipped_tables: list[tuple[str, str, list[str]]] = []
     translate_counter = 0
     current_part_id: str | None = None
     for item_index, src_idref, linear, item, opf_item, src_href, fragment_id, toc_label, html in units:
@@ -178,6 +179,9 @@ def extract(
             strategy = "source_only"
         translation_id = None
         if strategy == "translate":
+            cells = skipped_table_text(html)
+            if cells:
+                skipped_tables.append((item_id, src_href, cells))
             translate_counter += 1
             translation_id = f"ch_{translate_counter:02d}"
         parent_id = current_part_id if role in PART_CHILD_ROLES else None
@@ -226,7 +230,29 @@ def extract(
         "chapters": chapters_from_spine(spine),
     }
     save(manifest, book_out / "manifest.json")
+    _warn_skipped_tables(skipped_tables)
     return book_out
+
+
+def skipped_table_text(html: str) -> list[str]:
+    """Table cell text that never reaches the paragraph list (BUG-012), so it is not translated or audited."""
+    paragraphs = [re.sub(r"\s+", " ", p) for p in cb.extract_paragraphs(html)]
+    cells = []
+    for cell in BeautifulSoup(html, "html.parser").find_all(["td", "th"]):
+        text = re.sub(r"\s+", " ", cell.get_text(" ", strip=True)).strip()
+        if text and not any(text in p for p in paragraphs):
+            cells.append(text)
+    return cells
+
+
+def _warn_skipped_tables(skipped: list[tuple[str, str, list[str]]]) -> None:
+    if not skipped:
+        return
+    print(f"WARNING: {len(skipped)} item(s) contain table text that is not extracted, so it will not be translated:", file=sys.stderr)
+    for item_id, src_href, cells in skipped:
+        shown = "; ".join(repr(c[:40]) for c in cells[:3])
+        print(f"  {item_id} ({src_href}): {len(cells)} cell(s): {shown}", file=sys.stderr)
+    print("  Decide: translate them by hand after assembly, leave them as source, or ignore.", file=sys.stderr)
 
 
 def _resolve_toc_href(base_dir: str, href: str) -> tuple[str, str | None]:

@@ -92,6 +92,22 @@ Candidates from the Vietnamese plan, to log only if they actually occur: short-p
 **Options:** (a) in `validate_translation`, warn when the expected reply is marker-aligned but has no markers (changes a shared function; it needs a check against the zh-tw golden cases and the offline path, which may legitimately use the legacy branch); (b) make `bt_finalize.py` catch the `ValueError` and print it as `WARNINGS` (script only, no shared-code risk); (c) leave it.
 **Status:** logged 2026-11-12; user chose option (b) on 2026-11-13 ("minimum but effective"). `bt_finalize.py` catches the `ValueError` and prints it as `WARNINGS` with exit 1; test first (`test_reply_without_markers_exits_1_with_warnings_and_changes_nothing`). **FIXED** in the script only. `validate_translation` still passes a marker-less reply, so any other caller that trusts it alone is not protected (option (a) not taken).
 
+## BUG-012: Text inside HTML tables is dropped from the paragraph list, so it is never translated
+
+**Symptom:** *Down and Out in Paris and London* (2026-11-13): three short verses sit in `<table class="simplelist">` blocks (item_006, item_028, item_033; six lines in all). `dispatch.html_to_paragraphs` does not return them, so the translators never saw them, and the bilingual EPUB shows them in English only. Every audit passed: the lines are not in the paragraph list, so nothing checks them. A subagent noticed the gap (item_028: "the verse itself is missing from the source").
+**Root cause:** not traced into `extract_paragraphs` yet; the check was that no `<td>` text appears in any extracted paragraph for these three items (0 of 6). The tables are verse or lists, not data tables.
+**Reachability:** Any EPUB with poetry, lyrics or lists laid out as tables. Silent: no audit sees it.
+**Options:** (a) make the extractor return table cell text as paragraphs (touches shared extraction code; needs a zh-tw golden check); (b) detect dropped blocks at extract time and list them for the user; (c) document it and translate such blocks by hand.
+**Status:** logged 2026-11-13; user chose 1a + 1b on 2026-11-13. **Partly fixed:** (b) `extract_epub.extract` now prints a stderr warning listing the items and cells whose table text is not extracted (`skipped_table_text`, `test/test_extract_table_warning.py`, test first; manifest and chapters unchanged). The extractor still does not translate table cells (option a not taken). In this book the six lines were translated by hand: `table_cells_vi.json` plus `apply_table_cells.py` in the book folder, applied to the assembled EPUB after every assemble.
+
+## BUG-013: Short colloquial Vietnamese dialogue with names and French words is rejected by `is_target_text`
+
+**Symptom:** In the same run, the coverage audit failed on 4 correct translations of 50-60 characters, for example “‘Sainte Éloïse?’ Maria nói. ‘Sainte Éloïse là sao?’” (matches 0 of 3 counted words) and “‘Đồ ngu!’ nó kêu lên. ‘Imbecile! Thế còn cái này là gì?’” (1 of about 12).
+**Root cause:** the 1-in-5 rule (DECISION-016) counts lowercase-initial tokens; short dialogue made of common Vietnamese words without distinctive letters (nói, là, sao) plus names and French words falls under it. Same class as the three false negatives pinned in `test/test_vi_detector_technical.py`, now seen on narrative text.
+**Reachability:** Any vi fiction or memoir with short dialogue lines of 50+ characters. Second book in which a per-book exception was needed for this class.
+**Options:** (a) leave it and list the lines in the book's `source_only.json` (done here, 4 entries); (b) revisit the rule (Advise call first, CLAUDE.md trigger 2), for example a floor on the share of tokens with any Vietnamese-distinctive letter or the function-word list; (c) accept it.
+**Status:** logged 2026-11-13; waiting for a decision. Worked around with 4 `source_only.json` entries in this book.
+
 <!--
 ## BUG-001: <short symptom>
 
