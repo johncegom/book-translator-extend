@@ -12,6 +12,7 @@ Plan and rationale: `docs/plans/2026-11-11-vietnamese-language-profile.md`. This
 | 3 | Detector and audits | done 2026-11-11 | PR #7 merged; CI run 43033595597 green, 634 passed / 269 skipped | `docs/tasks/03-detector-audits/TASK.md` |
 | 4 | Skill file | done 2026-11-12 | PRs #9 and #11 merged; CI run 43069367924 green on ubuntu 3.10/3.12 and windows 3.12, 668 passed / 269 skipped | `docs/tasks/04-skill-file/TASK.md` |
 | 5 | One full book | done 2026-11-12 | PRs #13, #14, #15 (BUG-006 fix), #16, #17 (BUG-007 fix) merged; 672 passed / 269 skipped; Kindle read-back confirmed | `docs/tasks/05-full-book/TASK.md` |
+| 6 | Test for `bt_finalize.py` | in progress | branch `test/bt-finalize`; test passes locally, PR pending | `docs/tasks/06-bt-finalize-test/TASK.md` |
 
 Status values: not started / in progress / blocked / done. A phase is `done` only when its detail doc's Definition of Done is fully checked, and the Evidence cell links the PR or commit.
 
