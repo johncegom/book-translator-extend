@@ -1,6 +1,6 @@
 # Task: Phase 6 — Automated test for `scripts/bt_finalize.py`
 
-Status: in progress 2026-11-12. PR #23 is merged; branch `test/bt-finalize` is cut from `main` (`23ecd4c`). Test written and passing locally; commit, PR and CI still to do.
+Status: done 2026-11-13. PR #23 (script) and PR #24 (tests and the BUG-011 catch) merged; CI run 43371499935 green on ubuntu 3.10/3.12 and windows 3.12.
 
 Depends on: PR #23 (adds `scripts/bt_finalize.py`) being merged, so this work branches from `main` with the script present. Related: BUG-010 (`docs/BUGS.md`), `test/test_state_concurrency.py`.
 
@@ -22,8 +22,8 @@ Out: refactoring the script (the BUG-011 catch is the only script edit), testing
   4. Parallel: six copies of the real script run as separate processes; all six items end `done`.
 - [x] The parallel test is shown to fail when the script's `state.update` call is replaced by plain `state.load` + `state.save` (red check), then the script is restored unchanged (`git diff scripts/bt_finalize.py` is empty).
 - [x] `pytest -q` passes locally (723 passed, 269 skipped) with no other test edited or removed.
-- [ ] CI green on ubuntu 3.10/3.12 and windows 3.12.
-- [ ] Ledger row updated with the PR link.
+- [x] CI green on ubuntu 3.10/3.12 and windows 3.12 (run 43371499935).
+- [x] Ledger row updated with the PR link.
 
 ## Test Plan
 
@@ -37,8 +37,8 @@ Out: refactoring the script (the BUG-011 catch is the only script edit), testing
 - [x] 6.1 User approves the DoD and Test Plan
 - [x] 6.2 Wait for PR #23 to merge; branch `test/bt-finalize` from `main`
 - [x] 6.3 Add the test file (a draft already exists untracked at `test/test_bt_finalize.py` on `feat/bt-finalize-script`; carry it over, do not rewrite it)
-- [ ] 6.4 Red check, full suite, PR, CI
-- [ ] 6.5 Ledger and this doc ticked
+- [x] 6.4 Red check, full suite, PR, CI
+- [x] 6.5 Ledger and this doc ticked
 
 ## Open questions
 
