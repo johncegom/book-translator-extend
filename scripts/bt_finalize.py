@@ -26,7 +26,11 @@ def finalize(book_dir: Path, item: str, model: str = "opus") -> int:
     if warnings:
         print("WARNINGS", warnings)
         return 1
-    text = dispatch.extract_aligned_translation(raw, n)
+    try:
+        text = dispatch.extract_aligned_translation(raw, n)
+    except ValueError as exc:  # validate_translation can pass a reply that has no markers (BUG-011)
+        print("WARNINGS", [str(exc)])
+        return 1
     (book_dir / "chapters" / f"{item}_translation.txt").write_text(text, encoding="utf-8")
     state.update(book_dir / "state.json", lambda st: state.mark_done(st, item, text))
     translation_log.write_log_entry(
