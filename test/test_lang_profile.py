@@ -33,7 +33,7 @@ EXPECTED_FIELDS = {
     "footnote_label", "bilingual_edition_label", "aup_refused_notice", "prompt_rules",
     "default_custom_instructions", "is_target_text",
     # added in Phase 2 (17 fields total)
-    "register_hints_file", "glossary_prompt_slots", "generic_rules", "simplified_gate",
+    "register_hints_file", "glossary_prompt_slots", "generic_rules", "simplified_gate", "ncx_section_labels",
 }
 
 

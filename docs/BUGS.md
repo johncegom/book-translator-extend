@@ -27,8 +27,8 @@ States: FIXED (done, merged) / FIXED ON BRANCH (done, PR not merged) / FIXED, WI
 | BUG-013 | OPEN - NEEDS DECISION | Short colloquial Vietnamese dialogue with names and French words is rejected by `is_target_text` |
 | BUG-014 | OPEN - NEEDS DECISION | A `<blockquote>` feature box with several `<p>` is translated and paired as one block |
 | BUG-015 | OPEN - NEEDS DECISION | Endnote lines with a translated lead phrase and an English citation fail the coverage audit |
-| BUG-016 | OPEN - DECIDED, NOT STARTED | Section-heading entries in `toc.ncx` stay English-only in the bilingual EPUB |
-| BUG-017 | OPEN - DECIDED, NOT STARTED | Nav labels show "(untitled)" as the English side for pages without a heading |
+| BUG-016 | FIXED ON BRANCH, NOT MERGED | Section-heading entries in `toc.ncx` stay English-only in the bilingual EPUB |
+| BUG-017 | FIXED ON BRANCH, NOT MERGED | Nav labels show "(untitled)" as the English side for pages without a heading |
 
 ## BUG-001: EPUBs that pack several chapters into one spine file extract as a few huge items
 
@@ -182,23 +182,23 @@ States: FIXED (done, merged) / FIXED ON BRANCH (done, PR not merged) / FIXED, WI
 
 ## BUG-016: Section-heading entries in `toc.ncx` stay English-only in the bilingual EPUB
 
-**STATE: OPEN - DECIDED, NOT STARTED** (option (a), Vietnamese only, chosen 2026-11-13)
+**STATE: FIXED ON BRANCH, NOT MERGED** (fix/ncx-section-labels, vi only; PR link goes here)
 
 **Symptom:** In *Scarcity* the output `toc.ncx` has 87 navPoints and 65 of them have no Vietnamese: 64 in-chapter section headings (for example “SLACK”, “TUNNELING”, “THE FOCUS DIVIDEND”) and the second Part One entry (“Part One: THE SCARCITY MINDSET”, same file as the divider page). Grade (second run) reported it under rubric (e). The 22 chapter-level entries are bilingual (“Introduction ｜ Lời nói đầu”). `nav.xhtml` lists only spine-level pages, so it is not affected.
 **Root cause:** `nav_builder.patch_toc_ncx` labels only the chapter-level navPoint of each file and skips same-file descendants on purpose (comment: “Same-file descendants are subsection labels”). The Vietnamese heading does exist in the output, directly after the anchor (`<h5 id="sca0000608">SLACK</h5><p class="tgt tgt-vi …">KHOẢNG ĐỆM</p>`), but nothing reads it back into the NCX. Found by reading the code and the NCX; the fragment-matching branch (BUG-007) covers split-file entries only.
 **Reachability:** Any book whose source NCX lists in-chapter headings (most non-fiction). Affects only the legacy NCX; EPUB 3 readers use `nav.xhtml`. Pages with no entry in the source NCX (Title Page, brand page, Part Two/Three divider pages, “THE BEGINNING”) are labelled in `nav.xhtml` but cannot be in the NCX without adding entries.
 **Options:** (a) for fragment navPoints, take the text of the `tgt` sibling that follows the anchor and write `English ｜ Vietnamese` (shared code, needs a zh-tw golden check); (b) leave the NCX headings English and say so; (c) drop in-chapter entries from the NCX.
-**Status:** logged 2026-11-13; user chose option (a), Vietnamese only, 2026-11-13. The fix follows in its own PR. Not fixed.
+**Status:** user chose option (a), Vietnamese only, 2026-11-13. Fixed on branch `fix/ncx-section-labels` (not yet merged; PR link goes here). *Scarcity* NCX: 65 English-only entries before, 2 after (a heading whose translation equals its source, "BENIHANA", and a second whole-file "Part One" entry with no anchor to read from).
 
 ## BUG-017: Nav labels show "(untitled)" as the English side for pages without a heading
 
-**STATE: OPEN - DECIDED, NOT STARTED** (option (a), all languages, chosen 2026-11-14)
+**STATE: FIXED ON BRANCH, NOT MERGED** (fix/nav-placeholder-labels, all languages; PR link goes here)
 
 **Symptom:** In *Scarcity* `nav.xhtml` has entries such as "(untitled) ｜ Trang thương hiệu", "(untitled) ｜ Phần I", "(untitled) ｜ Phần II", "(untitled) ｜ Trang cuối" (9 nav/NCX labels in all; found by check E5 of the new Grade rubric). The dedication entry shows its whole first sentence as the English side ("For Amma, Appa, and e3, for and with unconditional love SM For Anastasia, Sophie ｜ Lời đề tặng"). The Vietnamese side is right; the English side is a placeholder or a long text fragment.
 **Root cause:** `extract_epub.py:157` falls back to `"(untitled)"` (or the first text of the page) as `first_heading` when a page has no heading tag, and `_nav_display_label` prints `first_heading ｜ label`.
 **Reachability:** Any book with image-only brand pages or part divider pages (most trade non-fiction). Cosmetic, navigation only.
 **Options:** (a) when the heading is a placeholder, show only the target label; (b) show the profile's English label for known pages (e.g. "Dedication"); (c) accept.
-**Status:** logged 2026-11-13. Option (a) chosen for all languages 2026-11-14. The fix follows in its own PR. Not fixed.
+**Status:** logged 2026-11-13. Option (a) chosen for all languages 2026-11-14 (DECISION-018); TASK.md approved the same day. Fixed on branch `fix/nav-placeholder-labels` (not yet merged; PR link goes here): `_nav_display_label` shows only the target label for a placeholder heading. *Scarcity*: 9 labels with "(untitled)" before, 0 after. Not covered: the dedication entry whose English side is its whole first sentence.
 
 <!--
 ## BUG-001: <short symptom>
