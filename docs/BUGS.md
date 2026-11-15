@@ -28,7 +28,7 @@ States: FIXED (done, merged) / FIXED ON BRANCH (done, PR not merged) / FIXED, WI
 | BUG-014 | OPEN - NEEDS DECISION | A `<blockquote>` feature box with several `<p>` is translated and paired as one block |
 | BUG-015 | OPEN - NEEDS DECISION | Endnote lines with a translated lead phrase and an English citation fail the coverage audit |
 | BUG-016 | FIXED ON BRANCH, NOT MERGED | Section-heading entries in `toc.ncx` stay English-only in the bilingual EPUB |
-| BUG-017 | OPEN - DECIDED, NOT STARTED | Nav labels show "(untitled)" as the English side for pages without a heading |
+| BUG-017 | FIXED ON BRANCH, NOT MERGED | Nav labels show "(untitled)" as the English side for pages without a heading |
 
 ## BUG-001: EPUBs that pack several chapters into one spine file extract as a few huge items
 
@@ -192,13 +192,13 @@ States: FIXED (done, merged) / FIXED ON BRANCH (done, PR not merged) / FIXED, WI
 
 ## BUG-017: Nav labels show "(untitled)" as the English side for pages without a heading
 
-**STATE: OPEN - DECIDED, NOT STARTED** (option (a), all languages, chosen 2026-11-14)
+**STATE: FIXED ON BRANCH, NOT MERGED** (fix/nav-placeholder-labels, all languages; PR link goes here)
 
 **Symptom:** In *Scarcity* `nav.xhtml` has entries such as "(untitled) ｜ Trang thương hiệu", "(untitled) ｜ Phần I", "(untitled) ｜ Phần II", "(untitled) ｜ Trang cuối" (9 nav/NCX labels in all; found by check E5 of the new Grade rubric). The dedication entry shows its whole first sentence as the English side ("For Amma, Appa, and e3, for and with unconditional love SM For Anastasia, Sophie ｜ Lời đề tặng"). The Vietnamese side is right; the English side is a placeholder or a long text fragment.
 **Root cause:** `extract_epub.py:157` falls back to `"(untitled)"` (or the first text of the page) as `first_heading` when a page has no heading tag, and `_nav_display_label` prints `first_heading ｜ label`.
 **Reachability:** Any book with image-only brand pages or part divider pages (most trade non-fiction). Cosmetic, navigation only.
 **Options:** (a) when the heading is a placeholder, show only the target label; (b) show the profile's English label for known pages (e.g. "Dedication"); (c) accept.
-**Status:** logged 2026-11-13. Option (a) chosen for all languages 2026-11-14. The fix follows in its own PR. Not fixed.
+**Status:** logged 2026-11-13. Option (a) chosen for all languages 2026-11-14 (DECISION-018); TASK.md approved the same day. Fixed on branch `fix/nav-placeholder-labels` (not yet merged; PR link goes here): `_nav_display_label` shows only the target label for a placeholder heading. *Scarcity*: 9 labels with "(untitled)" before, 0 after. Not covered: the dedication entry whose English side is its whole first sentence.
 
 <!--
 ## BUG-001: <short symptom>
