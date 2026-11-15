@@ -257,12 +257,18 @@ def _render_nav_item(entry: dict, children: list[dict], nav_path: str, opf_dir: 
         </li>"""
 
 
+# extract_epub gives a page with no heading "(untitled)"; "Untitled" is this function's own fallback.
+_PLACEHOLDER_HEADINGS = {"(untitled)", "untitled"}
+
+
 def _nav_display_label(entry: dict, missing_zh_collector: list[dict] | None = None, profile=None) -> str:
     first = _clean_text(str(entry.get("first_heading") or entry.get("id") or ""))
     if not first:
         first = "Untitled"
     zh = _nav_zh_label(first, entry, profile)
     if zh and zh != first:
+        if first.casefold() in _PLACEHOLDER_HEADINGS:
+            return zh  # BUG-017: a placeholder is not an English title, so show the target label alone
         return f"{first} ｜ {zh}"
     if missing_zh_collector is not None and entry.get("output_strategy") in {"translate", "source_only", "nav"}:
         missing_zh_collector.append(entry)
