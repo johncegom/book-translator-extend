@@ -98,6 +98,7 @@ class LanguageProfile:
     glossary_prompt_slots: dict[str, str]  # target_note, name_advice, title_rules, avoid_example; no braces
     generic_rules: tuple[str, ...]  # subagent rules used when no register matches
     simplified_gate: bool  # True: flag Simplified Chinese characters in the target text
+    ncx_section_labels: bool  # True: in-chapter toc.ncx entries get the target text read from the page (BUG-016)
 
 
 ZH_TW = LanguageProfile(
@@ -118,6 +119,7 @@ ZH_TW = LanguageProfile(
     glossary_prompt_slots=_ZH_TW_GLOSSARY_SLOTS,
     generic_rules=_ZH_TW_GENERIC_RULES,
     simplified_gate=True,
+    ncx_section_labels=False,
 )
 
 # --- Vietnamese ---------------------------------------------------------------
@@ -256,6 +258,7 @@ VI = LanguageProfile(
     glossary_prompt_slots=_VI_GLOSSARY_SLOTS,
     generic_rules=_VI_GENERIC_RULES,
     simplified_gate=False,
+    ncx_section_labels=True,
 )
 
 _REGISTRY: dict[str, LanguageProfile] = {ZH_TW.code: ZH_TW, VI.code: VI}
