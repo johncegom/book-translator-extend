@@ -43,3 +43,31 @@ Process and tooling lessons written by the Dream role. Product tradeoffs go to `
 - **Read every hand-back for side remarks, and pass them to later batches.** What happened: the table verses, the OCR typos ("Us" for "his") and a missed name (Madame Monce) all came up in subagent remarks, not in status lines. Lesson: collect the non-status remarks from each batch, and put the source quirks and new names into the next batch's prompt. This adds source-quality notes to the term feedback lesson from 2026-11-12. Trigger: a batch hands back.
 - **Copy subagent-facing lessons into the subagent prompt.** What happened: the "use the file tool, not heredocs" lesson already existed, yet two subagents hit heredoc failures again. The lesson was in this file but not in their prompt. Lesson: when building a fan-out prompt, scan this file for lessons about subagent behaviour and paste them in. Trigger: building or changing a subagent prompt.
 - **Treat a per-book exception needed in a second run as a bug signal.** What happened: correct short Vietnamese lines failed coverage again and were exempted through source_only.json. This is the same class as DECISION-016. Lesson: when a second run needs the same kind of exception, log it in BUGS.md or raise it with the user, not just add another exception. Count the exceptions per run in the report. Trigger: writing a per-book exception whose class already appears in DECISIONS.md or an earlier run.
+
+## 2026-11-15 (yes/no rubric build and Grade runs 5-6: *Scarcity*, en to vi)
+
+- **Check each planted fault before trusting its expected answer.**
+  Evidence: `docs/grade-rubric-validation.md` CODE round 1. 3 of 5 mismatches were the author's own wrong expectations (a "copy" planted with different spacing, a mutation that hit the landmarks list). In JC round 2 an expectation was changed after the rule was reworded.
+  Rule: when the same agent writes the checker, the faults and the expected answers, first confirm with a diff that each mutation changed only its target. Then save the expected answers to a file before the run, and log any later change to them as its own event.
+
+- **Write judge questions with no negation in the condition, and drop questions about degree.**
+  Evidence: JC round 2 used a "yes only if ... but no ..." wording, and the judge answered 0 of 5 the right way, every one inverted. J3 (style-avoid list made of degrees such as "too literal") got "no" on every sample. J2 got 3 of 5. Both moved to the Human list.
+  Rule: phrase each judged check as one positive condition where yes is a pass. If a wording fails on known samples, rewrite it once in positive form. If it still fails, or the item is a matter of degree, move it to the human read-back instead of tuning it further.
+
+- **Before calling a judged NO an output defect, check that the failing items belong to the population the question is about.**
+  Evidence: Grade run 5, J4 FAIL 5 of 20. Three were endnote citation lines, which the sampler should not have included. After the sampler skipped note pages, J4 passed 20 of 20 with no change to the output.
+  Rule: for each `no`, classify the item first (running text, citation, heading, list, loanword). If the failures cluster in a kind the question does not cover, fix the sampler or the exemption list, log it, and only then rerun.
+
+- **When a fail is cleared by changing the reference instead of the output, treat the rerun as weak evidence.**
+  Evidence: Grade run 6 JC FAIL ("xoay xở" against the glossary value "xoay xở nhiều việc cùng lúc") passed after the user shortened the glossary value. The judge then had nothing left to flag for those two pairs. The caveat is in `docs/grade-rubric-validation.md`.
+  Rule: the user decides any change to a glossary, spec term or rubric that makes a failing output pass, after seeing the choice framed as "which wording is right", not "how to pass". Record it as a Goodhart risk, and check the changed reference against all its other uses in the output (here, 9 places still used the long form). Do not count the rerun of the same pairs as independent proof.
+
+- **When a written lesson is broken a second time, move it into a script.**
+  Evidence: the 2026-11-12 lesson "copy measured numbers from tool output" existed, yet Grade run 4 got a typed length threshold of 0.5 (the real value is 0.60). The grader also called the function without a profile and got 0.22. Check D1 now computes the threshold in `scripts/grade_checks.py` with an explicit profile.
+  Rule: if a prompt-building lesson in this file is broken again, stop adding prose. Make the value come from code that the role's prompt runs or quotes verbatim, and pass every profile- or language-dependent argument explicitly.
+
+- **Apply the same normalization to an exemption list as to the values checked against it.**
+  Evidence: CODE round 3 made B1 whitespace-insensitive on the pairs only. It produced 14 new mismatches, because the `source_only.json` keys kept the audit's spacing. Round 4, past the 3-round limit with the user's approval, normalized both sides and reached 210 of 210.
+  Rule: when you loosen or tighten a comparison, list every set it is matched against (allowlists, exemption keys, golden records) and change them in the same step. Add one test where an exempt item differs only in the normalized property.
+
+Context I lacked: the actual judge prompts and sample JSON from the validation rounds (kept out of the repo), so the judge lessons rest on the summary in `docs/grade-rubric-validation.md` and the transcript excerpts, not on the raw judge replies.
