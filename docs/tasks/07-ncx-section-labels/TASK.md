@@ -1,6 +1,6 @@
 # Task: Phase 7 — Bilingual labels for in-chapter entries in `toc.ncx` (BUG-016)
 
-Status: scope set 2026-11-13 by the user: Vietnamese only for now, built so another language is a one-line change. Open questions 1 and 2 answered. No code has been changed yet.
+Status: done 2026-11-16. PR #29, landed on main through #31; CI green.
 
 Related: BUG-016 (`docs/BUGS.md`). Evidence: Grade run 3 on *Scarcity* (vi), rubric (e).
 
@@ -34,9 +34,9 @@ The function currently receives only the NCX text and entries. It needs a way to
 - [x] Edge cases covered with synthetic text (no copyrighted book text): heading with inline markup; anchor on a wrapper element; no `tgt` sibling; `tgt` identical to source; nested navPoints.
 - [x] `test/test_nav_builder.py`, `test/test_nav_fixes.py`, `test/test_ncx_doctitle.py` still pass unedited.
 - [x] Real check on *Scarcity*: reassemble, then count NCX navPoints without a target-language label. Result 2026-11-13: 65 before, 2 after. Left: "BENIHANA" (translation equals source) and a second whole-file "Part One" entry with no anchor to read.
-- [ ] `pytest -q` passes; CI green on ubuntu 3.10/3.12 and windows 3.12.
+- [x] `pytest -q` passes; CI green on ubuntu 3.10/3.12 and windows 3.12.
 - [x] `docs/DECISIONS.md` entry for the labelling rule and the vi-only rollout. Advise call logged in `docs/eagd-log.md`. Ledger row updated with the PR link. BUG-016 marked fixed with the PR.
-- [ ] A fourth Grade run after the change; report the result as it is.
+- [x] A fourth Grade run after the change; report the result as it is. Done as Grade runs 5 and 6 with the new rubric (`docs/grade-rubric-validation.md`); run 6 passes.
 
 ## Test Plan
 
@@ -52,8 +52,8 @@ The function currently receives only the NCX text and entries. It needs a way to
 - [x] 7.2 Branch `fix/ncx-section-labels` from `main`
 - [x] 7.3 Golden record from `bb0eb35`
 - [x] 7.4 Red test, then implementation to green
-- [ ] 7.5 Real-book check, full suite, PR, CI
-- [ ] 7.6 DECISIONS, BUGS, LEDGER updated; Grade run
+- [x] 7.5 Real-book check, full suite, PR, CI
+- [x] 7.6 DECISIONS, BUGS, LEDGER updated; Grade run
 
 ## Open questions (answered 2026-11-13)
 

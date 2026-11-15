@@ -1,6 +1,6 @@
 # Task: Phase 8 — No "(untitled)" English side in nav labels (BUG-017)
 
-Status: approved by the user 2026-11-14 (all languages). Code done on branch `fix/nav-placeholder-labels`; PR, CI and the Grade run are open.
+Status: done 2026-11-16. PR #30, landed on main through #31; CI green.
 
 Related: BUG-017 (`docs/BUGS.md`). Evidence: Grade run 5 on *Scarcity* (vi), check E5: 9 nav/NCX labels such as "(untitled) ｜ Phần I".
 
@@ -34,7 +34,7 @@ User answer 2026-11-14: apply to every language (DECISION-018). No profile field
 - [x] `grade_checks` E1 accepts a label equal to a `nav_overrides` value; a test plants a bare English label and still gets NO.
 - [x] `docs/grade-rubric.md` E1 line updated; `docs/grade-rubric-validation.md` notes the change.
 - [x] Real check on *Scarcity*: reassemble, run `grade_checks`; E1 and E5 both YES, no other check changes from YES to NO.
-- [ ] `pytest -q` passes; CI green on ubuntu 3.10/3.12 and windows 3.12.
+- [x] `pytest -q` passes; CI green on ubuntu 3.10/3.12 and windows 3.12.
 - [x] `docs/DECISIONS.md` entry (scope answer to question 1). BUG-017 marked fixed with the PR. Ledger row updated with the PR link.
 - [x] A Grade run after the change; report the result as it is. Result 2026-11-14: script 14/14 YES, J1 pass, J4 pass (1 no), JC FAIL (2 no, "xoay xở" for glossary "xoay xở nhiều việc cùng lúc"). See `docs/grade-rubric-validation.md`.
 
