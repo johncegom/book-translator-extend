@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse, html, json, posixpath, sys, zipfile
 from pathlib import Path
+from urllib.parse import unquote
 
 from bs4 import BeautifulSoup
 from ebooklib import epub  # re-exported for existing tests
@@ -138,6 +139,7 @@ def assemble(book_dir: Path, out_path: Path, strict_nav: bool = True) -> Path:
                     z.read(ncx_path).decode("utf-8", errors="replace"),
                     spine_entries,
                     profile,
+                    chapter_html=_chapter_html_by_filename(rewritten_bodies),
                 ).encode("utf-8")
 
     _emit_translations_payload(book_dir, rewritten_bodies, compatibility_items, opf_dir, profile)
@@ -283,6 +285,15 @@ def _legacy_test_compat_items(
         parts.append(f'<p class="tgt">{html.escape(tgt)}</p>')
     path = posixpath.join(opf_dir or "OEBPS", "chapters", f"{translation_id}.xhtml")
     return {path: ("\n".join(parts)).encode("utf-8")}
+
+def _chapter_html_by_filename(rewritten_bodies: list[tuple[str, dict, str]]) -> dict[str, str]:
+    """Assembled HTML per source file name; parts of a split file are joined (BUG-016 anchors)."""
+    pages: dict[str, str] = {}
+    for key, _entry, body in rewritten_bodies:
+        name = posixpath.basename(unquote(key))
+        pages[name] = pages.get(name, "") + body
+    return pages
+
 
 def _emit_translations_payload(
     book_dir: Path,

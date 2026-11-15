@@ -5,6 +5,7 @@ from __future__ import annotations
 import html
 import posixpath
 import re
+import warnings
 import zipfile
 from pathlib import Path
 from urllib.parse import quote, unquote
@@ -117,7 +118,7 @@ def source_ncx_path(source_epub: Path) -> str | None:
         return None
 
 
-def patch_toc_ncx(ncx_xml: str, entries: list[dict], profile=None) -> str:
+def patch_toc_ncx(ncx_xml: str, entries: list[dict], profile=None, chapter_html: dict[str, str] | None = None) -> str:
     entry_by_filename = _nav_entry_by_filename(entries)
     if not entry_by_filename:
         return ncx_xml
@@ -178,8 +179,52 @@ def patch_toc_ncx(ncx_xml: str, entries: list[dict], profile=None) -> str:
                 text_node = soup.new_tag("text")
                 nav_label.append(text_node)
             text_node.string = _nav_display_label(entry, None, profile)
+            patched.add(id(navpoint))
+    _label_section_entries(soup, patched, target_filename, profile, chapter_html)
     _label_doc_title(soup, profile)
     return str(soup)
+
+
+def _label_section_entries(soup, labelled: set[int], target_filename, profile, chapter_html) -> None:
+    """BUG-016: in-chapter navPoints get ``English ｜ Target``, the target read from the page.
+
+    Opt-in per language (``profile.ncx_section_labels``). The target is the ``tgt`` paragraph that
+    directly follows the heading carrying the anchor id; no such paragraph, or the same text as the
+    label, leaves the entry as it was.
+    """
+    if profile is None or not getattr(profile, "ncx_section_labels", False):
+        return
+    if chapter_html is None:
+        warnings.warn(
+            f"profile {profile.code!r} labels in-chapter toc.ncx entries but no chapter_html was passed; "
+            "those entries stay in the source language",
+            UserWarning, stacklevel=3,
+        )
+        return
+    pages: dict[str, BeautifulSoup] = {}
+    for navpoint in soup.find_all("navPoint"):
+        if id(navpoint) in labelled:
+            continue
+        content = navpoint.find("content", recursive=False)
+        src = str(content.get("src") or "") if content is not None else ""
+        fragment = unquote(src.partition("#")[2])
+        filename = target_filename(navpoint)
+        if not fragment or filename not in chapter_html:
+            continue
+        if filename not in pages:
+            pages[filename] = BeautifulSoup(chapter_html[filename], "html.parser")
+        anchor = pages[filename].find(id=fragment)
+        following = anchor.find_next_sibling() if anchor is not None else None
+        if following is None or "tgt" not in (following.get("class") or []):
+            continue
+        target = _clean_text(following.get_text())
+        nav_label = navpoint.find("navLabel", recursive=False)
+        text_node = nav_label.find("text", recursive=False) if nav_label is not None else None
+        if text_node is None or not target:
+            continue
+        current = _clean_text(text_node.get_text())
+        if current and target != current:
+            text_node.string = f"{current} ｜ {target}"
 
 
 def _label_doc_title(soup, profile=None) -> None:
