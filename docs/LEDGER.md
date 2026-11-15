@@ -14,6 +14,7 @@ Plan and rationale: `docs/plans/2026-11-11-vietnamese-language-profile.md`. This
 | 5 | One full book | done 2026-11-12 | PRs #13, #14, #15 (BUG-006 fix), #16, #17 (BUG-007 fix) merged; 672 passed / 269 skipped; Kindle read-back confirmed | `docs/tasks/05-full-book/TASK.md` |
 | 6 | Test for `bt_finalize.py` | done 2026-11-13 | PRs #23 and #24 merged (BUG-011 fixed in #24); CI run 43371499935 green on ubuntu 3.10/3.12 and windows 3.12; 4 tests, 728 passed / 269 skipped after #25 | `docs/tasks/06-bt-finalize-test/TASK.md` |
 | 7 | Bilingual NCX section labels (BUG-016) | in progress 2026-11-13 (vi only) | — | `docs/tasks/07-ncx-section-labels/TASK.md` |
+| 8 | No "(untitled)" English side in nav labels (BUG-017) | in progress 2026-11-14 (code done; PR, CI, Grade run open) | — | `docs/tasks/08-nav-placeholder-labels/TASK.md` |
 
 Status values: not started / in progress / blocked / done. A phase is `done` only when its detail doc's Definition of Done is fully checked, and the Evidence cell links the PR or commit.
 
