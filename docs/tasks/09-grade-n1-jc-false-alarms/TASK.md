@@ -1,0 +1,33 @@
+# Task: Phase 9 — Grade checks N1 and JC false alarms (BUG-019, BUG-020)
+
+Status: in review. Code is on PR #33. This doc was written after the code, so the DoD below needs your approval before the phase can be marked done.
+
+Related: BUG-019 (fixed), BUG-020 (partly fixed), BUG-018 (logged only, not part of this phase). Evidence: Grade runs on *The Personal MBA* (vi).
+
+## Why
+
+Check N1 said NO for 4 correct blocks (footnote numbers stuck to figures, decimal notation). JC listed glossary terms found inside titles of works, which stay in English by design.
+
+## Scope
+
+In: `_number_tokens`, `_number_pairs`, `_plain_number`, `_strip_quoted_titles` in `scripts/grade_checks.py`; tests in `test/test_grade_checks.py`; `docs/BUGS.md` entries BUG-018 to BUG-020.
+Out: `content_blocks` (shared with zh-tw; the marker is still flattened for the model); terms with several valid renderings (BUG-020, open); BUG-018 (detector rule, needs an Advise call and a decision).
+
+## Definition of Done
+
+- [ ] N1 ignores `<sup class="endnote">` markers in the source and treats "0.50" and "0,5" as equal; "2,750" equals "2.750".
+- [ ] JC does not list a term inside a quoted title-like phrase (3+ words, every 4+ letter word capitalised).
+- [ ] Tests for both exist and pass (3 new for N1).
+- [ ] *The Personal MBA* N1: 0 false alarms (was 4).
+- [ ] `pytest -q` passes; CI green on ubuntu 3.10/3.12 and windows 3.12.
+- [ ] Ledger Evidence cell links the PR.
+
+## Test Plan
+
+- `pytest -q test/test_grade_checks.py`
+- `pytest -q`
+- Real book: `python -m scripts.grade_checks --source <src.epub> --output <out.epub> --book-dir <book_dir>`
+
+## Progress notes
+
+- 2026-11-16: code and 20 related tests done (run with the font tests). Full suite and CI not yet run.
