@@ -29,6 +29,10 @@ States: FIXED (done, merged) / FIXED ON BRANCH (done, PR not merged) / FIXED, WI
 | BUG-015 | OPEN - NEEDS DECISION | Endnote lines with a translated lead phrase and an English citation fail the coverage audit |
 | BUG-016 | FIXED | Section-heading entries in `toc.ncx` stay English-only in the bilingual EPUB |
 | BUG-017 | FIXED | Nav labels show "(untitled)" as the English side for pages without a heading |
+| BUG-018 | OPEN - NEEDS DECISION | Short Vietnamese labels whose words use only shared accented letters fail `is_target_text` |
+| BUG-019 | FIXED | Grade check N1 reports false alarms for footnote numbers and decimals |
+| BUG-020 | OPEN - NEEDS DECISION | Grade check JC fails on overlapping and ordinary-word glossary terms |
+| BUG-021 | OPEN - NEEDS DECISION | `grade_checks` crashes on Windows when it prints a line with "｜" |
 
 ## BUG-001: EPUBs that pack several chapters into one spine file extract as a few huge items
 
