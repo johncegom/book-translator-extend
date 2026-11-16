@@ -1,10 +1,14 @@
 # quota-guard
 
-A Claude Code mod that stops new subagent (`Agent`) calls while the 5-hour usage window is at or above a threshold (default 85%). It exists so a long, many-subagent job (such as translating a book) pauses itself before it uses up the window.
+A Claude Code mod that guards new subagent (`Agent`) calls while the 5-hour usage window is at or above a threshold (default 85%). It exists so a long, many-subagent job (such as translating a book) pauses itself before it uses up the window.
 
-- Checks the live figure (`$.session.usage()`) every time an `Agent` call is about to start. Over the threshold, the call is refused with a message that says the percent, the limit and the reset time, and tells the model to stop and report.
+At the threshold it **asks you** (default) or **blocks** (`onLimit`, below).
+
+- Checks the live figure (`$.session.usage()`) every time an `Agent` call is about to start.
+- Over the threshold with `onLimit` = `ask` (default): a dialog asks "Start this subagent anyway?" with three answers. **Allow this one** lets that call through. **Allow until the window resets** lets every call through until the 5-hour window resets, then asks again. **Keep blocking** (or closing the dialog, or typing under "Other") refuses the call. Parallel calls share one dialog. Where nobody can answer (`claude -p`), the call is refused.
+- Over the threshold with `onLimit` = `block`: the call is refused with a message that says the percent, the limit and the reset time, and tells the model to stop and report.
 - Shows one toast when the window first crosses the threshold, and re-arms when it drops below.
-- Releases by itself after the window resets. Nothing to turn off.
+- Releases by itself after the window resets. Nothing to turn off. An "Allow until the window resets" answer is kept in memory only: reloading the plugin or restarting asks again.
 - Fails open: if the usage figure is missing (an API key, not a subscription) or the hook errors, calls go through.
 - Limits: subagents already running finish, so use can pass the threshold by a batch; only `Agent` is blocked; the main session is not.
 
@@ -22,7 +26,7 @@ A Claude Code mod that stops new subagent (`Agent`) calls while the 5-hour usage
 
 Then run `/reload-plugins` in an open Claude Code session, or restart it. The mod is read from this folder, so keep the folder where it is while the mod is installed. Remove it with `install.ps1 -Uninstall` or `install.sh --uninstall`.
 
-Set the threshold (1 to 100) with `claude plugin configure quota-guard`.
+Set the threshold (1 to 100) and `onLimit` (`ask` or `block`) with `claude plugin configure quota-guard`.
 
 ## Develop
 
