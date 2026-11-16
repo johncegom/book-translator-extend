@@ -1,6 +1,6 @@
 # Task: Phase 11 — Coverage audit failure text names the book's language (BUG-005)
 
-Status: in progress. DoD and Test Plan approved by the user 2026-11-17.
+Status: done 2026-11-17 (PR #38 merged, `13db0a6`). DoD and Test Plan approved by the user 2026-11-17.
 
 Related: BUG-005 (`docs/BUGS.md`). Side finding, not in scope: the standalone CLI of `bilingual_coverage_audit.py` has no `--lang` flag and always uses zh-tw (log as BUG-022).
 
@@ -21,7 +21,7 @@ Message becomes `missing adjacent {lang} after: ...` with `lang = profile.code.s
 
 - [x] New test: a vi book with an untranslated English paragraph fails with "missing adjacent vi". It is red on current code, then green.
 - [x] The existing zh-tw tests in `test/test_bilingual_coverage_audit.py` (lines 21, 90, 151 pin "missing adjacent zh") are unedited and pass.
-- [x] `pytest -q` passes (764 passed, 269 skipped). CI result: to check on PR #38.
+- [x] `pytest -q` passes (764 passed, 269 skipped). Full suite on main after merge: 764 passed, 269 skipped. CI ran on main only (run 43935572921), not on the stacked PR.
 - [x] BUG-005 is FIXED in the table and in its entry, with the PR link. Ledger row links the PR.
 
 ## Test Plan
