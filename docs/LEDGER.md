@@ -17,6 +17,7 @@ Plan and rationale: `docs/plans/2026-11-11-vietnamese-language-profile.md`. This
 | 8 | No "(untitled)" English side in nav labels (BUG-017) | done 2026-11-16 | PR #30 (landed on main through #31); CI run 43744360320 green on ubuntu 3.10/3.12 and windows 3.12; 748 passed / 269 skipped | `docs/tasks/08-nav-placeholder-labels/TASK.md` |
 | 9 | Grade N1 and JC false alarms (BUG-019, BUG-020) | done 2026-11-17 | PR #33 merged (`e7b2a39`); CI run 43896241718 green, 753 passed / 269 skipped; *The Personal MBA* 14/14 script checks YES | `docs/tasks/09-grade-n1-jc-false-alarms/TASK.md` |
 | 10 | Font override for Vietnamese | done 2026-11-17 | PR #34 merged (`d45c8da`); CI run 43896142345 green on ubuntu 3.10/3.12 and windows 3.12, 757 passed / 269 skipped; real book checked by user | `docs/tasks/10-font-override/TASK.md` |
+| 11 | Coverage audit failure text names the language (BUG-005) | in progress | - | `docs/tasks/11-coverage-message-language/TASK.md` |
 
 Status values: not started / in progress / blocked / done. A phase is `done` only when its detail doc's Definition of Done is fully checked, and the Evidence cell links the PR or commit.
 

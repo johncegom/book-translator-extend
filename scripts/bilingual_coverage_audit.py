@@ -72,7 +72,7 @@ def _audit_with_warnings(
                 reason = untranslated_reason(path, node, text, profile)
                 if not is_english_content(text, profile) and reason is not None:
                     continue
-                message = f"{path}: missing adjacent zh after: {text[:120]}"
+                message = f"{path}: missing adjacent {profile.code.split('-')[0]} after: {text[:120]}"
                 # Short English that the old universe (>=50 chars) never looked
                 # at: "—Reid", "Begin Reading", "A Note on the Text". These are
                 # genuinely untranslated, so they must not vanish — but turning
