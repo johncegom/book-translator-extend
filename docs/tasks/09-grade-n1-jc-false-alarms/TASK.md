@@ -1,6 +1,6 @@
 # Task: Phase 9 — Grade checks N1 and JC false alarms (BUG-019, BUG-020)
 
-Status: done 2026-11-17 (PR #33 open, CI green, not yet merged). This doc was written after the code.
+Status: done 2026-11-17 (PR #33 merged, `e7b2a39`). This doc was written after the code.
 
 Related: BUG-019 (fixed), BUG-020 (partly fixed), BUG-018 (logged only, not part of this phase). Evidence: Grade runs on *The Personal MBA* (vi).
 

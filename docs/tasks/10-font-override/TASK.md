@@ -1,6 +1,6 @@
 # Task: Phase 10 — Font override for Vietnamese glyph coverage
 
-Status: done 2026-11-17 (PR #34 open, CI green, not yet merged). This doc was written after the code, so the DoD below needs your approval before the phase can be marked done.
+Status: done 2026-11-17 (PR #34 merged, `d45c8da`). This doc was written after the code, so the DoD below needs your approval before the phase can be marked done.
 
 ## Why
 

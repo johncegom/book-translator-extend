@@ -16,7 +16,7 @@ States: FIXED (done, merged) / FIXED ON BRANCH (done, PR not merged) / FIXED, WI
 | BUG-002 | FIXED | A vi book whose glossary register matches no hint phrase is audited with min_length_ratio 0.22 |
 | BUG-003 | FIXED | The standalone `translation_quality_audit.py` CLI ignores the profile |
 | BUG-004 | OPEN - NO FIX PLANNED | A dispatch `register_override` changes the prompt but not the audit's length threshold |
-| BUG-005 | OPEN - NEEDS DECISION | The coverage audit's failure text says "adjacent zh" for every language |
+| BUG-005 | FIXED | The coverage audit's failure text says "adjacent zh" for every language |
 | BUG-006 | FIXED | `source_only` items inside a split file are not exempted from the coverage and quality audits |
 | BUG-007 | FIXED | NCX table of contents is mostly English-only for books with split files |
 | BUG-008 | PARTLY FIXED | A technical vi book keeps a few English-only labels in the output EPUB |
@@ -29,6 +29,10 @@ States: FIXED (done, merged) / FIXED ON BRANCH (done, PR not merged) / FIXED, WI
 | BUG-015 | OPEN - NEEDS DECISION | Endnote lines with a translated lead phrase and an English citation fail the coverage audit |
 | BUG-016 | FIXED | Section-heading entries in `toc.ncx` stay English-only in the bilingual EPUB |
 | BUG-017 | FIXED | Nav labels show "(untitled)" as the English side for pages without a heading |
+| BUG-018 | OPEN - NEEDS DECISION | Short Vietnamese labels whose words use only shared accented letters fail `is_target_text` |
+| BUG-019 | FIXED | Grade check N1 reports false alarms for footnote numbers and decimals |
+| BUG-020 | PARTLY FIXED | Grade check JC fails on overlapping and ordinary-word glossary terms |
+| BUG-021 | OPEN - NEEDS DECISION | `grade_checks` crashes on Windows when it prints a line with "｜" |
 
 ## BUG-001: EPUBs that pack several chapters into one spine file extract as a few huge items
 
@@ -72,13 +76,13 @@ States: FIXED (done, merged) / FIXED ON BRANCH (done, PR not merged) / FIXED, WI
 
 ## BUG-005: The coverage audit's failure text says "adjacent zh" for every language
 
-**STATE: OPEN - NEEDS DECISION** (zh-tw wording is pinned by tests)
+**STATE: FIXED** (2026-11-17, PR #38; failure text only, success line and docstring left)
 
 **Symptom:** For a `vi` book, `bilingual_coverage_audit` reports `missing adjacent zh after: ...` (found in the Phase 4 dry run). The module docstring and the success line ("adjacent Han translations") are also zh-only.
 **Root cause:** The message strings in `scripts/bilingual_coverage_audit.py` (lines 1, 75, 201) were never made profile-aware; the logic is. Wording only; the verdict is correct.
 **Reachability:** Every failing or passing `vi` run; misleading to a reader, no wrong result.
 **Options:** (a) use the profile's `long_name` or code in the messages, keeping the zh-tw text byte-identical; (b) leave as is.
-**Status:** logged 2026-11-12, no fix scheduled; needs a decision (the zh-tw wording is pinned by existing tests, so a change must keep it byte-identical).
+**Status:** logged 2026-11-12, no fix scheduled; needs a decision (the zh-tw wording is pinned by existing tests, so a change must keep it byte-identical). FIXED 2026-11-17 (option a, no profile field): the failure message uses `profile.code.split('-')[0]`, so vi says "missing adjacent vi" and zh-tw stays "missing adjacent zh". Not fixed: the success line and docstring still say Han/zh; they are reachable only through the standalone CLI, which has no `--lang` flag.
 
 ## BUG-006: `source_only` items inside a split file are not exempted from the coverage and quality audits
 
@@ -222,7 +226,7 @@ States: FIXED (done, merged) / FIXED ON BRANCH (done, PR not merged) / FIXED, WI
 
 ## BUG-020: Grade check JC fails on overlapping and ordinary-word glossary terms
 
-**STATE: OPEN - NEEDS DECISION** (glossary fixed for this book; quoted titles fixed in the check; multi-rendering terms open)
+**STATE: PARTLY FIXED** (glossary fixed for this book; quoted titles fixed in the check; multi-rendering terms open)
 
 **Symptom:** In *The Personal MBA* JC had 4 NO of 20. P0629: "new stock sells out" matched the term "Stock". P2404: "Overhead" matched inside "Communication Overhead", which is correctly rendered "chi phí giao tiếp". P1626: "thay đổi" is in the Vietnamese but the judge said no. P2676: my glossary said Sampling = "Dùng thử" but the book means statistics, so the translation was really wrong in 7 chapter-10 paragraphs, and a part of the real failure.
 **Root cause:** the glossary sample lists every term found in the source text, whatever its sense, and overlapping keys (Overhead, Communication Overhead) are both listed. Plain words as keys ("Stock", "Change") match everyday usage. The P2676 case was my wrong glossary entry, not the check.
@@ -230,6 +234,16 @@ States: FIXED (done, merged) / FIXED ON BRANCH (done, PR not merged) / FIXED, WI
 **More cases (second Grade run, 2026-11-16):** P3031: "Value Stream" inside the English title of an article in an endnote pointer; titles of works stay in English, so the NO is a check limit. P2267: "Management" in an epigraph credit is "QUẢN TRỊ" while the glossary says "Quản lý"; both are valid Vietnamese for "management" depending on context, so one fixed value is too strict (decision: no text change). P2513: the glossary value was "Entropy (độ hỗn loạn)", and the explanatory bracket is not in the translation; fixed in the glossary (now "Entropy").
 **Options:** (a) in `sample_pairs`, drop a term when a longer listed term contains it; (b) list only capitalised occurrences; (c) leave it and read each NO; (d) let a glossary term list several accepted renderings and skip terms inside quoted titles.
 **Status:** logged 2026-11-16; waiting for a decision on the rest. FIXED 2026-11-16: terms inside a quoted title-like phrase (3+ words, every word of 4+ letters capitalised) are no longer listed for JC (`_strip_quoted_titles`). Open: a term with several valid renderings (Management). Glossary: Sampling set to "Lấy mẫu", Stock and Overhead removed, and 14 uses of "Dùng thử" replaced in the translations.
+
+## BUG-021: `grade_checks` crashes on Windows when it prints a line with "｜"
+
+**STATE: OPEN - NEEDS DECISION** (not fixed; `PYTHONIOENCODING=utf-8` avoids it)
+
+**Symptom:** `python -m scripts.grade_checks ...` on *The Personal MBA* printed A1 to E2, then stopped with `UnicodeEncodeError: 'charmap' codec can't encode character '｜'` at `print(f"{cid}: ...")` (`scripts/grade_checks.py:327`). E3, E4, N1, G1 and E5 never printed, and the exit was not clean.
+**Root cause:** On this Windows machine stdout uses cp1252, which has no "｜" (U+FF5C). Check E3 puts a nav title with "｜" into its evidence text, and `print` fails on it. Not yet checked: whether a console set to UTF-8 (`chcp 65001`) or a redirect to a file behaves the same.
+**Reachability:** Any bilingual book on a Windows console with a legacy code page, because every nav title and label carries "｜". Not tested on Linux or macOS, where stdout is normally UTF-8; CI runs the tests, not this command line. It cuts the Grade script output short without a pass or fail line, so a run could be read as complete when it is not.
+**Options:** (a) in `main`, call `sys.stdout.reconfigure(encoding="utf-8")` before printing; (b) print with `errors="replace"`; (c) leave it and document `PYTHONIOENCODING=utf-8` in `docs/grade-rubric.md`.
+**Status:** logged 2026-11-17; waiting for a decision. Not fixed.
 
 <!--
 ## BUG-001: <short symptom>
