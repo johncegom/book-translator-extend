@@ -110,13 +110,65 @@ def _anchor_target(z: zipfile.ZipFile, fname: str, frag: str) -> str | None:
 _NUMBER = re.compile(r"\d[\d.,]*\d|\d")
 
 
+def _plain_number(token: str) -> str:
+    """Digits of one number token, whichever of "." and "," the writer used (no fixed rule exists).
+
+    A last group that is not exactly 3 digits is a decimal part ("0.50", "0,5", "1.234,56"): its
+    trailing zeros are dropped so "0.50" equals "0,5". A last group of 3 digits is a thousands group.
+    """
+    parts = re.split(r"[.,]", token)
+    if len(parts) > 1 and len(parts[-1]) != 3:
+        parts[-1] = parts[-1].rstrip("0")
+    return "".join(parts)
+
+
 def _number_tokens(text: str) -> set[str]:
     """Numbers of 3+ digits, separators removed (2,750 equals 2.750).
 
     One- and two-digit numbers are skipped on purpose: Vietnamese often spells them out
     ("3 a.m." becomes "ba giờ sáng"), which a script cannot match. Found on the first real run.
     """
-    return {n for n in (re.sub(r"[.,]", "", t) for t in _NUMBER.findall(text)) if len(n) >= 3}
+    return {n for n in (_plain_number(t) for t in _NUMBER.findall(text)) if len(n) >= 3}
+
+
+def _number_pairs(z: zipfile.ZipFile):
+    """(source text, target text) per paired block, with endnote markers removed from the source.
+
+    An endnote marker is a `<sup class="endnote">` the source puts right after a figure ("$28,650." then
+    note 10); get_text would flatten it into "28,650.10" (BUG-019). The marker is a note number, not part of
+    the figure, so N1 must not demand it in the target.
+    """
+    for name, soup in _content_docs(z):
+        for tag in soup.find_all(True):
+            if "src" not in _classes(tag):
+                continue
+            nxt = tag.find_next_sibling()
+            if nxt is None or "tgt" not in _classes(nxt):
+                continue
+            clone = BeautifulSoup(str(tag), "html.parser")
+            for sup in clone.find_all("sup", class_="endnote"):
+                sup.decompose()
+            yield _norm(clone.get_text()), _norm(nxt.get_text())
+
+
+_QUOTED = re.compile(r"“[^”]*”|\"[^\"]*\"")
+
+
+def _is_title_like(quoted: str) -> bool:
+    """3+ words, and every word of 4+ letters starts with a capital: a title of a work, not a term in quotes."""
+    words = [w for w in re.split(r"[\s/]+", quoted.strip("“”\" ")) if w]
+    if len(words) < 3:
+        return False
+    long_words = [re.sub(r"^\W+", "", w) for w in words if len(re.sub(r"\W", "", w)) >= 4]
+    return all(w[:1].isupper() for w in long_words)
+
+
+def _strip_quoted_titles(text: str) -> str:
+    """Remove quoted title-like phrases, so a glossary term inside the title of a work is not listed for JC.
+
+    Titles of works stay in the source language by design, so the term cannot appear in the translation.
+    """
+    return _QUOTED.sub(lambda m: "" if _is_title_like(m.group(0)) else m.group(0), text)
 
 
 def sample_pairs(output: Path, book_dir: Path, n: int = 20, seed: int = 20261114) -> list[dict]:
@@ -145,7 +197,8 @@ def sample_pairs(output: Path, book_dir: Path, n: int = 20, seed: int = 20261114
     out = []
     for i in chosen:
         f, s, t = pool[i]
-        found = {k: v for k, v in terms.items() if re.search(r"\b" + re.escape(k) + r"\b", s, re.I)}
+        judged_src = _strip_quoted_titles(s)
+        found = {k: v for k, v in terms.items() if re.search(r"\b" + re.escape(k) + r"\b", judged_src, re.I)}
         out.append({"id": f"P{i:04d}", "file": f, "src": s, "tgt": t, "glossary_terms": found, "style_avoid": avoid})
     return out
 
@@ -244,7 +297,7 @@ def run_checks(source: Path, output: Path, book_dir: Path) -> list[tuple[str, bo
             f"{len(ncx_points)} ncx entries, {len(excluded)} excluded (no differing tgt after the anchor), "
             f"{len(e4_bad)} missing {SEP}" + (f": {e4_bad[:3]}" if e4_bad else ""))
     with zipfile.ZipFile(output) as z:
-        pairs2 = [(s_, g_) for _f, s_, g_ in _pairs(z) if g_ and len(s_) >= MIN_BLOCK_CHARS]
+        pairs2 = [(s_, g_) for s_, g_ in _number_pairs(z) if g_ and len(s_) >= MIN_BLOCK_CHARS]
     lost = [(sorted(_number_tokens(s_) - _number_tokens(g_))[:3], s_[:50]) for s_, g_ in pairs2 if _number_tokens(s_) - _number_tokens(g_)]
     add("N1", not lost, f"{len(pairs2)} blocks, {len(lost)} with a source number missing from the target"
         + (f": {lost[0]}" if lost else ""))
