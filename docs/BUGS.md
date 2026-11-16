@@ -31,7 +31,7 @@ States: FIXED (done, merged) / FIXED ON BRANCH (done, PR not merged) / FIXED, WI
 | BUG-017 | FIXED | Nav labels show "(untitled)" as the English side for pages without a heading |
 | BUG-018 | OPEN - NEEDS DECISION | Short Vietnamese labels whose words use only shared accented letters fail `is_target_text` |
 | BUG-019 | FIXED | Grade check N1 reports false alarms for footnote numbers and decimals |
-| BUG-020 | OPEN - NEEDS DECISION | Grade check JC fails on overlapping and ordinary-word glossary terms |
+| BUG-020 | PARTLY FIXED | Grade check JC fails on overlapping and ordinary-word glossary terms |
 | BUG-021 | OPEN - NEEDS DECISION | `grade_checks` crashes on Windows when it prints a line with "｜" |
 
 ## BUG-001: EPUBs that pack several chapters into one spine file extract as a few huge items
@@ -226,7 +226,7 @@ States: FIXED (done, merged) / FIXED ON BRANCH (done, PR not merged) / FIXED, WI
 
 ## BUG-020: Grade check JC fails on overlapping and ordinary-word glossary terms
 
-**STATE: OPEN - NEEDS DECISION** (glossary fixed for this book; quoted titles fixed in the check; multi-rendering terms open)
+**STATE: PARTLY FIXED** (glossary fixed for this book; quoted titles fixed in the check; multi-rendering terms open)
 
 **Symptom:** In *The Personal MBA* JC had 4 NO of 20. P0629: "new stock sells out" matched the term "Stock". P2404: "Overhead" matched inside "Communication Overhead", which is correctly rendered "chi phí giao tiếp". P1626: "thay đổi" is in the Vietnamese but the judge said no. P2676: my glossary said Sampling = "Dùng thử" but the book means statistics, so the translation was really wrong in 7 chapter-10 paragraphs, and a part of the real failure.
 **Root cause:** the glossary sample lists every term found in the source text, whatever its sense, and overlapping keys (Overhead, Communication Overhead) are both listed. Plain words as keys ("Stock", "Change") match everyday usage. The P2676 case was my wrong glossary entry, not the check.
