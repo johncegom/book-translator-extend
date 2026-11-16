@@ -1,6 +1,6 @@
 import { expect, test } from 'claude-code/testing'
 
-import { fiveHour, parseThreshold, refusal } from '../hooks/register'
+import { ALLOW_ONCE, ALLOW_WINDOW, KEEP_BLOCKING, askText, fiveHour, isAllowed, parseOnLimit, parseThreshold, refusal } from '../hooks/register'
 
 test('threshold: numbers 1 to 100 are kept, anything else is 85', () => {
   expect(parseThreshold('85')).toBe(85)
@@ -50,4 +50,23 @@ test('no five-hour figure (API key) fails open', async ($, on) => {
   on('tool.call', () => ({ result: {} }))
   const res = await $.tool.call({ tool: 'Agent', prompt: 'x', description: 'x', subagent_type: 'general-purpose' })
   expect(JSON.stringify(res)).not.toMatch(/quota-guard/)
+})
+
+test('onLimit: only "block" blocks outright, anything else asks', () => {
+  expect(parseOnLimit('block')).toBe('block')
+  expect(parseOnLimit(' BLOCK ')).toBe('block')
+  for (const other of ['ask', '', 'abc', undefined, null]) expect(parseOnLimit(other)).toBe('ask')
+})
+
+test('only the two allow answers let a call through', () => {
+  expect(isAllowed(ALLOW_ONCE)).toBe(true)
+  expect(isAllowed(ALLOW_WINDOW)).toBe(true)
+  for (const no of [KEEP_BLOCKING, '', 'yes please', 'allow this one']) expect(isAllowed(no)).toBe(false)
+})
+
+test('the question names the percent, the limit and the reset', () => {
+  const text = askText({ kind: 'five_hour', percentUsed: 90.2 }, 85)
+  expect(text).toMatch(/at 90%/)
+  expect(text).toMatch(/limit 85%/)
+  expect(text).toMatch(/anyway\?$/)
 })

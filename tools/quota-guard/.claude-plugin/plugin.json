@@ -1,7 +1,7 @@
 {
   "name": "quota-guard",
   "version": "0.1.0",
-  "description": "Claude Code mod: refuses new subagent (Agent) calls while the 5-hour usage window is at or above a threshold (default 85%), and toasts once when it crosses. Fails open if usage is unavailable.",
+  "description": "Claude Code mod: at or above a threshold of the 5-hour usage window (default 85%) asks before a new subagent (Agent) call starts, or refuses it if set to block, and toasts once when it crosses. Fails open if usage is unavailable.",
   "author": { "name": "Minh Duong" },
   "userConfig": {
     "threshold": {
@@ -9,6 +9,12 @@
       "title": "Block subagents at this percent of the 5-hour window (default 85)",
       "description": "A number from 1 to 100. While the 5-hour window is at or above it, new Agent calls are refused until the window resets.",
       "default": "85"
+    },
+    "onLimit": {
+      "type": "string",
+      "title": "At the limit: \"ask\" (default) or \"block\"",
+      "description": "ask: a dialog asks whether to start the subagent anyway (once, or until the window resets). block: refuse every new subagent until the window resets.",
+      "default": "ask"
     }
   }
 }
