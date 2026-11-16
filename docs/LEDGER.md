@@ -18,7 +18,7 @@ Plan and rationale: `docs/plans/2026-11-11-vietnamese-language-profile.md`. This
 | 9 | Grade N1 and JC false alarms (BUG-019, BUG-020) | done 2026-11-17 | PR #33 merged (`e7b2a39`); CI run 43896241718 green, 753 passed / 269 skipped; *The Personal MBA* 14/14 script checks YES | `docs/tasks/09-grade-n1-jc-false-alarms/TASK.md` |
 | 10 | Font override for Vietnamese | done 2026-11-17 | PR #34 merged (`d45c8da`); CI run 43896142345 green on ubuntu 3.10/3.12 and windows 3.12, 757 passed / 269 skipped; real book checked by user | `docs/tasks/10-font-override/TASK.md` |
 | 11 | Coverage audit failure text names the language (BUG-005) | done 2026-11-17 | PR #38 merged (`13db0a6`); 764 passed / 269 skipped on main (local); CI run 43935572921 on main | `docs/tasks/11-coverage-message-language/TASK.md` |
-| 12 | Coverage audit command line picks the language (BUG-022) | in progress | - | `docs/tasks/12-coverage-cli-book-dir/TASK.md` |
+| 12 | Coverage audit command line picks the language (BUG-022) | in progress (CI and merge pending) | PR #41 (open) | `docs/tasks/12-coverage-cli-book-dir/TASK.md` |
 
 Status values: not started / in progress / blocked / done. A phase is `done` only when its detail doc's Definition of Done is fully checked, and the Evidence cell links the PR or commit.
 

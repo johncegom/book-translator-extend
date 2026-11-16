@@ -21,11 +21,11 @@ Out: `translation_quality_audit.py` (it already has `--book-dir`; it does not wa
 
 ## Definition of Done
 
-- [ ] Tests first, seen red: vi book passes with `--book-dir`; no `--book-dir` warns on stderr; `--book-dir` without `state.json` warns; unregistered `target_lang` raises `ValueError`; zh-tw success line unchanged.
-- [ ] Existing tests are unedited and pass; `pytest -q` passes; CI green on ubuntu 3.10/3.12 and windows 3.12.
-- [ ] Real check on *The Personal MBA* with `--book-dir`: PASS or WARN like Grade A1, not 3077 FAIL lines.
-- [ ] `SKILL.md` QA snippet passes `--book-dir` to the coverage and quality audits.
-- [ ] BUG-022 is FIXED in the table and the entry, with the PR link. Ledger row links the PR.
+- [x] Tests first, seen red: vi book passes with `--book-dir`; no `--book-dir` warns on stderr; `--book-dir` without `state.json` warns; unregistered `target_lang` raises `ValueError`; zh-tw success line unchanged.
+- [ ] Existing tests are unedited and pass; `pytest -q` passes (769 passed, 269 skipped: done); CI green on ubuntu 3.10/3.12 and windows 3.12 (pending on PR #41).
+- [x] Real check on *The Personal MBA* with `--book-dir`: PASS or WARN like Grade A1, not 3077 FAIL lines.
+- [x] `SKILL.md` QA snippet passes `--book-dir` to the coverage and quality audits.
+- [x] BUG-022 is FIXED ON BRANCH in the table and the entry, with the PR link. Ledger row links the PR.
 
 ## Test Plan
 
@@ -37,3 +37,4 @@ Out: `translation_quality_audit.py` (it already has `--book-dir`; it does not wa
 ## Progress notes
 
 - 2026-11-17: approved. Branch `fix/bug-022-coverage-cli-book-dir`, built on the open PR #40 branch (BUG-022 text not on main yet); PR goes to main.
+- 2026-11-17: 5 new tests red, then green; 769 passed / 269 skipped. *The Personal MBA* with `--book-dir`: PASS, 0 missing lines (was 3077). PR #41. Open: CI, merge. A stray runtime log was committed and then removed in a later commit.
