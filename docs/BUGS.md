@@ -33,6 +33,7 @@ States: FIXED (done, merged) / FIXED ON BRANCH (done, PR not merged) / FIXED, WI
 | BUG-019 | FIXED | Grade check N1 reports false alarms for footnote numbers and decimals |
 | BUG-020 | PARTLY FIXED | Grade check JC fails on overlapping and ordinary-word glossary terms |
 | BUG-021 | OPEN - NEEDS DECISION | `grade_checks` crashes on Windows when it prints a line with "｜" |
+| BUG-022 | OPEN - NEEDS DECISION | The `bilingual_coverage_audit.py` command line always audits as zh-tw, so a correct vi book fails |
 
 ## BUG-001: EPUBs that pack several chapters into one spine file extract as a few huge items
 
@@ -244,6 +245,16 @@ States: FIXED (done, merged) / FIXED ON BRANCH (done, PR not merged) / FIXED, WI
 **Reachability:** Any bilingual book on a Windows console with a legacy code page, because every nav title and label carries "｜". Not tested on Linux or macOS, where stdout is normally UTF-8; CI runs the tests, not this command line. It cuts the Grade script output short without a pass or fail line, so a run could be read as complete when it is not.
 **Options:** (a) in `main`, call `sys.stdout.reconfigure(encoding="utf-8")` before printing; (b) print with `errors="replace"`; (c) leave it and document `PYTHONIOENCODING=utf-8` in `docs/grade-rubric.md`.
 **Status:** logged 2026-11-17; waiting for a decision. Not fixed.
+
+## BUG-022: The `bilingual_coverage_audit.py` command line always audits as zh-tw, so a correct vi book fails
+
+**STATE: OPEN - NEEDS DECISION** (not fixed; the audit run by `assemble` and `audit_suite` is correct)
+
+**Symptom:** `python -m scripts.bilingual_coverage_audit --source <src.epub> --output <vi_book.epub>` on the finished *The Personal MBA* output prints `bilingual_coverage_audit: FAIL` with 3077 "missing adjacent zh after: ..." lines (checked 2026-11-17). The same book passes in the Grade checks (A1: 0 FAIL lines).
+**Root cause:** `main()` takes only `--source` and `--output`, and `audit()` is called without a profile, so it defaults to `ZH_TW`. A Vietnamese sibling is not Han text, so every paragraph counts as untranslated. Found by running the command that `SKILL.md` gives (lines 864-866).
+**Reachability:** Any vi book where someone follows the skill's QA step by hand. The verdict is wrong (a false FAIL), not just the wording. The success line and docstring ("Han translations") are also zh-only (left open in BUG-005). Not checked: whether `structural_audit.py` and `translation_quality_audit.py` have the same gap in their command lines.
+**Options:** (a) add a `--lang` option (default `zh-tw`, so current zh-tw use is unchanged) and pass `get_profile(...)` to `audit()`; (b) read the language from the book folder (`state.json`) when `--book-dir` is given; (c) leave the code and say in `SKILL.md` that this command line is zh-tw only, pointing vi books to the `audit_suite` run.
+**Status:** logged 2026-11-17; waiting for a decision. Not fixed. Recommendation: (a), small and testable.
 
 <!--
 ## BUG-001: <short symptom>
