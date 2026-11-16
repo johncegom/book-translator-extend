@@ -200,6 +200,37 @@ States: FIXED (done, merged) / FIXED ON BRANCH (done, PR not merged) / FIXED, WI
 **Options:** (a) when the heading is a placeholder, show only the target label; (b) show the profile's English label for known pages (e.g. "Dedication"); (c) accept.
 **Status:** logged 2026-11-13. Option (a) chosen for all languages 2026-11-14 (DECISION-018); TASK.md approved the same day. FIXED 2026-11-16: PR #30, landed on main through #31: `_nav_display_label` shows only the target label for a placeholder heading. *Scarcity*: 9 labels with "(untitled)" before, 0 after. Not covered: the dedication entry whose English side is its whole first sentence.
 
+## BUG-018: Short Vietnamese labels whose words use only shared accented letters fail `is_target_text`
+
+**STATE: OPEN - NEEDS DECISION** (not fixed; 305 amber warnings accepted in *The Personal MBA*)
+
+**Symptom:** In *The Personal MBA* `bilingual_coverage` ends WARN, not PASS, with 305 "missing adjacent zh" lines for correct translations. Examples: "Attention" -> "Sự chú ý", "Goals" -> "Mục tiêu", "Habits" -> "Thói quen", "Free" -> "Miễn phí", "Scale" -> "Quy mô". They sit in the Contents page, the Key Terms page and chapter section headings.
+**Root cause:** `_vi_is_target_text` counts only lowercase-initial tokens and, for those, only letters that are not shared with French or Portuguese (ú, ý, ó, í, ô, ê and so on). "Sự chú ý" counts ["chú", "ý"], neither matches, so it returns False; "Mục tiêu" -> ["tiêu"] and "Thói quen" -> ["quen"] fail the same way. Checked by calling the function on 8 labels: 7 False, only "Tính đáng chú ý" True (has đ). Same cause family as BUG-013 and BUG-015.
+**Reachability:** Any vi book with short heading, term or contents lines. They are amber WARN, not FAIL, so the audit still passes; the Grade checks may count them.
+**Options:** (a) accept the warnings; (b) add more function words or count the capitalised first token for short text (changes a detector rule, so an Advise call comes first); (c) list them in `source_only.json` (wrong: they are translated).
+**Status:** logged 2026-11-16; waiting for a decision. Not fixed.
+
+## BUG-019: Grade check N1 reports false alarms for footnote numbers and decimals
+
+**STATE: FIXED** (2026-11-16, `scripts/grade_checks.py`, all languages)
+
+**Symptom:** In *The Personal MBA* N1 says NO for 4 blocks whose translations are correct. "$28,650.10" and "$66,300.11" (a footnote number stuck to the figure) are read as the numbers 2865010 and 6630011; "$0.50" becomes "0,5 đô la" and its source token "050" is not found; "2009.9" is read as 20099.
+**Root cause:** `_number_tokens` in `scripts/grade_checks.py` strips separators and joins what follows, so a footnote number after a figure becomes part of it, and a decimal point is treated as a separator, not as a decimal mark. Found by printing the 4 pairs (`scripts/grade_checks.py`, N1 block).
+**Reachability:** Any book with endnote numbers directly after figures or with decimal amounts (most non-fiction). It turns a correct book into a Grade FAIL.
+**Options:** (a) skip a trailing 1–3 digit group that follows a sentence-final figure and compare decimals in both notations; (b) accept N1 as advisory; (c) leave it and review by hand.
+**Status:** logged 2026-11-16. FIXED the same day, option chosen by the user: N1 now reads each source block with `<sup class="endnote">` markers removed (`_number_pairs`), and `_plain_number` drops trailing zeros of a decimal part, so "0.50" equals "0,5" and "2,750" equals "2.750" whichever separator the writer used. Tests first: 3 new in `test/test_grade_checks.py`. *The Personal MBA* N1: 4 false alarms before, 0 after. Not fixed here: the model still sees the marker flattened ("28,650.10") and writes "28.650 đô la. 10"; keeping a marker attached needs a change to `content_blocks` (shared with zh-tw).
+
+## BUG-020: Grade check JC fails on overlapping and ordinary-word glossary terms
+
+**STATE: OPEN - NEEDS DECISION** (glossary fixed for this book; quoted titles fixed in the check; multi-rendering terms open)
+
+**Symptom:** In *The Personal MBA* JC had 4 NO of 20. P0629: "new stock sells out" matched the term "Stock". P2404: "Overhead" matched inside "Communication Overhead", which is correctly rendered "chi phí giao tiếp". P1626: "thay đổi" is in the Vietnamese but the judge said no. P2676: my glossary said Sampling = "Dùng thử" but the book means statistics, so the translation was really wrong in 7 chapter-10 paragraphs, and a part of the real failure.
+**Root cause:** the glossary sample lists every term found in the source text, whatever its sense, and overlapping keys (Overhead, Communication Overhead) are both listed. Plain words as keys ("Stock", "Change") match everyday usage. The P2676 case was my wrong glossary entry, not the check.
+**Reachability:** Any book whose glossary has plain-word terms or terms inside longer terms.
+**More cases (second Grade run, 2026-11-16):** P3031: "Value Stream" inside the English title of an article in an endnote pointer; titles of works stay in English, so the NO is a check limit. P2267: "Management" in an epigraph credit is "QUẢN TRỊ" while the glossary says "Quản lý"; both are valid Vietnamese for "management" depending on context, so one fixed value is too strict (decision: no text change). P2513: the glossary value was "Entropy (độ hỗn loạn)", and the explanatory bracket is not in the translation; fixed in the glossary (now "Entropy").
+**Options:** (a) in `sample_pairs`, drop a term when a longer listed term contains it; (b) list only capitalised occurrences; (c) leave it and read each NO; (d) let a glossary term list several accepted renderings and skip terms inside quoted titles.
+**Status:** logged 2026-11-16; waiting for a decision on the rest. FIXED 2026-11-16: terms inside a quoted title-like phrase (3+ words, every word of 4+ letters capitalised) are no longer listed for JC (`_strip_quoted_titles`). Open: a term with several valid renderings (Management). Glossary: Sampling set to "Lấy mẫu", Stock and Overhead removed, and 14 uses of "Dùng thử" replaced in the translations.
+
 <!--
 ## BUG-001: <short symptom>
 
