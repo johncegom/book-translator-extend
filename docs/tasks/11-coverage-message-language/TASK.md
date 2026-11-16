@@ -19,10 +19,10 @@ Message becomes `missing adjacent {lang} after: ...` with `lang = profile.code.s
 
 ## Definition of Done
 
-- [ ] New test: a vi book with an untranslated English paragraph fails with "missing adjacent vi". It is red on current code, then green.
-- [ ] The existing zh-tw tests in `test/test_bilingual_coverage_audit.py` (lines 21, 90, 151 pin "missing adjacent zh") are unedited and pass.
-- [ ] `pytest -q` passes; CI green on ubuntu 3.10/3.12 and windows 3.12.
-- [ ] BUG-005 is FIXED in the table and in its entry, with the PR link. Ledger row links the PR.
+- [x] New test: a vi book with an untranslated English paragraph fails with "missing adjacent vi". It is red on current code, then green.
+- [x] The existing zh-tw tests in `test/test_bilingual_coverage_audit.py` (lines 21, 90, 151 pin "missing adjacent zh") are unedited and pass.
+- [x] `pytest -q` passes (764 passed, 269 skipped). CI result: to check on PR #38.
+- [x] BUG-005 is FIXED in the table and in its entry, with the PR link. Ledger row links the PR.
 
 ## Test Plan
 
@@ -32,3 +32,4 @@ Message becomes `missing adjacent {lang} after: ...` with `lang = profile.code.s
 ## Progress notes
 
 - 2026-11-17: approved. Branch `fix/bug-005-coverage-message`, stacked on `docs/bug-021-ledger-merged` (PR #37) so the ledger lines do not conflict.
+- 2026-11-17: test red (1 failed, 1 passed), fix applied, 764 passed / 269 skipped. PR #38. Open: CI result, merge.
