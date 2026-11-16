@@ -863,13 +863,15 @@ python3 {baseDir}/scripts/structural_audit.py \
 
 python3 {baseDir}/scripts/bilingual_coverage_audit.py \
   --source "<book_path>" \
-  --output "<book_stem>_bilingual.epub"
+  --output "<book_stem>_bilingual.epub" \
+  --book-dir "<out_dir>/<book_stem>"
 
 python3 {baseDir}/scripts/href_resolve_audit.py \
   --output "<book_stem>_bilingual.epub"
 
 python3 {baseDir}/scripts/translation_quality_audit.py \
-  --output "<book_stem>_bilingual.epub"
+  --output "<book_stem>_bilingual.epub" \
+  --book-dir "<out_dir>/<book_stem>"
 ```
 
 `structural_audit.py` checks source-vs-output spine representation, missing
