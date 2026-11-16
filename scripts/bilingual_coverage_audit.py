@@ -183,22 +183,48 @@ def _clean(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
+def _profile_from_book_dir(book_dir: Path | None):
+    """Profile named by <book_dir>/state.json target_lang (BUG-022), same rule as translation_quality_audit.
+
+    With no book folder, or a folder without state.json, the language cannot be read: audit as zh-tw
+    and say so on stderr, because for any other language that verdict is wrong.
+    """
+    if book_dir is None or not (book_dir / "state.json").is_file():
+        reason = "no --book-dir given" if book_dir is None else f"no state.json in {book_dir}"
+        print(
+            f"warning: {reason}; auditing as zh-tw. Pass --book-dir <book folder> "
+            "for a book in another language.",
+            file=sys.stderr,
+        )
+        return ZH_TW
+    # Imported here because audit_suite imports this module.
+    try:
+        from scripts.audit_suite import _profile_for_book
+    except ModuleNotFoundError:  # pragma: no cover - direct script execution path
+        from audit_suite import _profile_for_book  # type: ignore
+    return _profile_for_book(book_dir)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--book-dir", type=Path)
     args = parser.parse_args(argv)
     for path in (args.source, args.output):
         if not path.is_file():
             print(f"not a file: {path}", file=sys.stderr)
             return 2
-    passed, failures = audit(args.source, args.output)
+    profile = _profile_from_book_dir(args.book_dir)
+    passed, failures = audit(args.source, args.output, profile=profile)
     print(f"bilingual_coverage_audit: {'PASS' if passed else 'FAIL'}")
     if failures:
         for failure in failures:
             print(f"  - {failure}")
-    else:
+    elif profile.code == "zh-tw":
         print("all English content paragraphs have adjacent Han translations")
+    else:
+        print(f"all English content paragraphs have adjacent translations ({profile.long_name})")
     return 0 if passed else 1
 
 
