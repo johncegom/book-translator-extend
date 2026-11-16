@@ -15,12 +15,12 @@ Out: `content_blocks` (shared with zh-tw; the marker is still flattened for the 
 
 ## Definition of Done
 
-- [ ] N1 ignores `<sup class="endnote">` markers in the source and treats "0.50" and "0,5" as equal; "2,750" equals "2.750".
-- [ ] JC does not list a term inside a quoted title-like phrase (3+ words, every 4+ letter word capitalised).
-- [ ] Tests for both exist and pass (3 new for N1).
+- [x] N1 ignores `<sup class="endnote">` markers in the source and treats "0.50" and "0,5" as equal; "2,750" equals "2.750".
+- [x] JC does not list a term inside a quoted title-like phrase (3+ words, every 4+ letter word capitalised).
+- [x] Tests for both exist and pass (3 new for N1).
 - [ ] *The Personal MBA* N1: 0 false alarms (was 4).
-- [ ] `pytest -q` passes; CI green on ubuntu 3.10/3.12 and windows 3.12.
-- [ ] Ledger Evidence cell links the PR.
+- [x] `pytest -q` passes (753 passed, 269 skipped); CI run 43896241718 green on ubuntu 3.10/3.12 and windows 3.12.
+- [x] Ledger Evidence cell links the PR.
 
 ## Test Plan
 
@@ -31,3 +31,4 @@ Out: `content_blocks` (shared with zh-tw; the marker is still flattened for the 
 ## Progress notes
 
 - 2026-11-16: code and 20 related tests done (run with the font tests). Full suite and CI not yet run.
+- 2026-11-17: full suite 753 passed / 269 skipped; CI green. Open: the *The Personal MBA* N1 recheck (0 false alarms). The book is not in this checkout, so only the BUG-019 log (4 before, 0 after) supports it; needs a rerun with the book path.

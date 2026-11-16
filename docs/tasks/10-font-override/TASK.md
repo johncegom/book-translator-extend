@@ -1,6 +1,6 @@
 # Task: Phase 10 — Font override for Vietnamese glyph coverage
 
-Status: in review. Code is on PR #34. This doc was written after the code, so the DoD below needs your approval before the phase can be marked done.
+Status: done 2026-11-17 (PR #34 open, CI green, not yet merged). This doc was written after the code, so the DoD below needs your approval before the phase can be marked done.
 
 ## Why
 
@@ -17,13 +17,13 @@ Rule is per font, not per letter. An embedded font is kept only if it has a glyp
 
 ## Definition of Done
 
-- [ ] Unsupported fonts are replaced as a whole; supported fonts are kept.
-- [ ] A book whose fonts are all supported is left byte-for-byte unchanged in content (no font added).
-- [ ] Second run on its own output changes nothing.
+- [x] Unsupported fonts are replaced as a whole; supported fonts are kept.
+- [x] A book whose fonts are all supported is left byte-for-byte unchanged in content (no font added).
+- [x] Second run on its own output changes nothing.
 - [x] Real check on one vi book: user opened *The Personal MBA* output on 2026-11-17 and confirmed it renders correctly.
-- [ ] `pytest -q` passes; CI green on ubuntu 3.10/3.12 and windows 3.12.
+- [x] `pytest -q` passes (757 passed, 269 skipped); CI run 43896142345 green on ubuntu 3.10/3.12 and windows 3.12.
 - [x] DECISIONS entry: DECISION-019.
-- [ ] Ledger Evidence cell links the PR.
+- [x] Ledger Evidence cell links the PR.
 
 ## Test Plan
 
@@ -35,3 +35,4 @@ Rule is per font, not per letter. An embedded font is kept only if it has a glyp
 
 - 2026-11-16: code and tests done (20 passed together with grade tests). Full suite, CI and the real-book check not yet done.
 - 2026-11-17: user checked the *The Personal MBA* output, fine. DECISION-019 added. Open: full suite, CI, approval, PR link in ledger.
+- 2026-11-17: full suite 757 passed / 269 skipped; CI green on ubuntu 3.10/3.12 and windows 3.12.
