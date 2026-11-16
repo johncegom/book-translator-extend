@@ -231,6 +231,16 @@ States: FIXED (done, merged) / FIXED ON BRANCH (done, PR not merged) / FIXED, WI
 **Options:** (a) in `sample_pairs`, drop a term when a longer listed term contains it; (b) list only capitalised occurrences; (c) leave it and read each NO; (d) let a glossary term list several accepted renderings and skip terms inside quoted titles.
 **Status:** logged 2026-11-16; waiting for a decision on the rest. FIXED 2026-11-16: terms inside a quoted title-like phrase (3+ words, every word of 4+ letters capitalised) are no longer listed for JC (`_strip_quoted_titles`). Open: a term with several valid renderings (Management). Glossary: Sampling set to "Lấy mẫu", Stock and Overhead removed, and 14 uses of "Dùng thử" replaced in the translations.
 
+## BUG-021: `grade_checks` crashes on Windows when it prints a line with "｜"
+
+**STATE: OPEN - NEEDS DECISION** (not fixed; `PYTHONIOENCODING=utf-8` avoids it)
+
+**Symptom:** `python -m scripts.grade_checks ...` on *The Personal MBA* printed A1 to E2, then stopped with `UnicodeEncodeError: 'charmap' codec can't encode character '｜'` at `print(f"{cid}: ...")` (`scripts/grade_checks.py:327`). E3, E4, N1, G1 and E5 never printed, and the exit was not clean.
+**Root cause:** On this Windows machine stdout uses cp1252, which has no "｜" (U+FF5C). Check E3 puts a nav title with "｜" into its evidence text, and `print` fails on it. Not yet checked: whether a console set to UTF-8 (`chcp 65001`) or a redirect to a file behaves the same.
+**Reachability:** Any bilingual book on a Windows console with a legacy code page, because every nav title and label carries "｜". Linux, macOS and CI (which sets UTF-8) are not affected. It cuts the Grade script output short without a pass or fail line, so a run could be read as complete when it is not.
+**Options:** (a) in `main`, call `sys.stdout.reconfigure(encoding="utf-8")` before printing; (b) print with `errors="replace"`; (c) leave it and document `PYTHONIOENCODING=utf-8` in `docs/grade-rubric.md`.
+**Status:** logged 2026-11-17; waiting for a decision. Not fixed.
+
 <!--
 ## BUG-001: <short symptom>
 
