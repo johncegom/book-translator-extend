@@ -16,7 +16,7 @@ States: FIXED (done, merged) / FIXED ON BRANCH (done, PR not merged) / FIXED, WI
 | BUG-002 | FIXED | A vi book whose glossary register matches no hint phrase is audited with min_length_ratio 0.22 |
 | BUG-003 | FIXED | The standalone `translation_quality_audit.py` CLI ignores the profile |
 | BUG-004 | OPEN - NO FIX PLANNED | A dispatch `register_override` changes the prompt but not the audit's length threshold |
-| BUG-005 | OPEN - NEEDS DECISION | The coverage audit's failure text says "adjacent zh" for every language |
+| BUG-005 | FIXED | The coverage audit's failure text says "adjacent zh" for every language |
 | BUG-006 | FIXED | `source_only` items inside a split file are not exempted from the coverage and quality audits |
 | BUG-007 | FIXED | NCX table of contents is mostly English-only for books with split files |
 | BUG-008 | PARTLY FIXED | A technical vi book keeps a few English-only labels in the output EPUB |
@@ -76,13 +76,13 @@ States: FIXED (done, merged) / FIXED ON BRANCH (done, PR not merged) / FIXED, WI
 
 ## BUG-005: The coverage audit's failure text says "adjacent zh" for every language
 
-**STATE: OPEN - NEEDS DECISION** (zh-tw wording is pinned by tests)
+**STATE: FIXED** (2026-11-17, PR #38; failure text only, success line and docstring left)
 
 **Symptom:** For a `vi` book, `bilingual_coverage_audit` reports `missing adjacent zh after: ...` (found in the Phase 4 dry run). The module docstring and the success line ("adjacent Han translations") are also zh-only.
 **Root cause:** The message strings in `scripts/bilingual_coverage_audit.py` (lines 1, 75, 201) were never made profile-aware; the logic is. Wording only; the verdict is correct.
 **Reachability:** Every failing or passing `vi` run; misleading to a reader, no wrong result.
 **Options:** (a) use the profile's `long_name` or code in the messages, keeping the zh-tw text byte-identical; (b) leave as is.
-**Status:** logged 2026-11-12, no fix scheduled; needs a decision (the zh-tw wording is pinned by existing tests, so a change must keep it byte-identical).
+**Status:** logged 2026-11-12, no fix scheduled; needs a decision (the zh-tw wording is pinned by existing tests, so a change must keep it byte-identical). FIXED 2026-11-17 (option a, no profile field): the failure message uses `profile.code.split('-')[0]`, so vi says "missing adjacent vi" and zh-tw stays "missing adjacent zh". Not fixed: the success line and docstring still say Han/zh; they are reachable only through the standalone CLI, which has no `--lang` flag.
 
 ## BUG-006: `source_only` items inside a split file are not exempted from the coverage and quality audits
 
