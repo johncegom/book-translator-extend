@@ -237,7 +237,7 @@ States: FIXED (done, merged) / FIXED ON BRANCH (done, PR not merged) / FIXED, WI
 
 **Symptom:** `python -m scripts.grade_checks ...` on *The Personal MBA* printed A1 to E2, then stopped with `UnicodeEncodeError: 'charmap' codec can't encode character '｜'` at `print(f"{cid}: ...")` (`scripts/grade_checks.py:327`). E3, E4, N1, G1 and E5 never printed, and the exit was not clean.
 **Root cause:** On this Windows machine stdout uses cp1252, which has no "｜" (U+FF5C). Check E3 puts a nav title with "｜" into its evidence text, and `print` fails on it. Not yet checked: whether a console set to UTF-8 (`chcp 65001`) or a redirect to a file behaves the same.
-**Reachability:** Any bilingual book on a Windows console with a legacy code page, because every nav title and label carries "｜". Linux, macOS and CI (which sets UTF-8) are not affected. It cuts the Grade script output short without a pass or fail line, so a run could be read as complete when it is not.
+**Reachability:** Any bilingual book on a Windows console with a legacy code page, because every nav title and label carries "｜". Not tested on Linux or macOS, where stdout is normally UTF-8; CI runs the tests, not this command line. It cuts the Grade script output short without a pass or fail line, so a run could be read as complete when it is not.
 **Options:** (a) in `main`, call `sys.stdout.reconfigure(encoding="utf-8")` before printing; (b) print with `errors="replace"`; (c) leave it and document `PYTHONIOENCODING=utf-8` in `docs/grade-rubric.md`.
 **Status:** logged 2026-11-17; waiting for a decision. Not fixed.
 
