@@ -20,9 +20,9 @@ Rule is per font, not per letter. An embedded font is kept only if it has a glyp
 - [ ] Unsupported fonts are replaced as a whole; supported fonts are kept.
 - [ ] A book whose fonts are all supported is left byte-for-byte unchanged in content (no font added).
 - [ ] Second run on its own output changes nothing.
-- [ ] Real check on one vi book: open the output and confirm accented letters render in one font (needs a reader or Kindle; you do this).
+- [x] Real check on one vi book: user opened *The Personal MBA* output on 2026-11-17 and confirmed it renders correctly.
 - [ ] `pytest -q` passes; CI green on ubuntu 3.10/3.12 and windows 3.12.
-- [ ] Decision: do we want a DECISIONS entry for "per font, not per letter" and for bundling ~550 KB of fonts? (my view: yes, one entry.)
+- [x] DECISIONS entry: DECISION-019.
 - [ ] Ledger Evidence cell links the PR.
 
 ## Test Plan
@@ -34,3 +34,4 @@ Rule is per font, not per letter. An embedded font is kept only if it has a glyp
 ## Progress notes
 
 - 2026-11-16: code and tests done (20 passed together with grade tests). Full suite, CI and the real-book check not yet done.
+- 2026-11-17: user checked the *The Personal MBA* output, fine. DECISION-019 added. Open: full suite, CI, approval, PR link in ledger.
