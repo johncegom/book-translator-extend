@@ -254,7 +254,7 @@ States: FIXED (done, merged) / FIXED ON BRANCH (done, PR not merged) / FIXED, WI
 **Root cause:** `main()` takes only `--source` and `--output`, and `audit()` is called without a profile, so it defaults to `ZH_TW`. A Vietnamese sibling is not Han text, so every paragraph counts as untranslated. Found by running the command that `SKILL.md` gives (lines 864-866).
 **Reachability:** Any vi book where someone follows the skill's QA step by hand. The verdict is wrong (a false FAIL), not just the wording. The success line and docstring ("Han translations") are also zh-only (left open in BUG-005). Not checked: whether `structural_audit.py` and `translation_quality_audit.py` have the same gap in their command lines.
 **Options:** (a) add a `--lang` option (default `zh-tw`, so current zh-tw use is unchanged) and pass `get_profile(...)` to `audit()`; (b) read the language from the book folder (`state.json`) when `--book-dir` is given; (c) leave the code and say in `SKILL.md` that this command line is zh-tw only, pointing vi books to the `audit_suite` run.
-**Status:** logged 2026-11-17; waiting for a decision. Not fixed. Recommendation: (a), small and testable.
+**Status:** logged 2026-11-17; waiting for a decision. Not fixed. Recommendation: (b). `translation_quality_audit.py` already works this way (BUG-003): optional `--book-dir`, language from `state.json` through `audit_suite._profile_for_book`. Plan in the PR that fixes it.
 
 <!--
 ## BUG-001: <short symptom>
