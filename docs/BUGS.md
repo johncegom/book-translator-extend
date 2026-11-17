@@ -33,7 +33,7 @@ States: FIXED (done, merged) / FIXED ON BRANCH (done, PR not merged) / FIXED, WI
 | BUG-019 | FIXED | Grade check N1 reports false alarms for footnote numbers and decimals |
 | BUG-020 | PARTLY FIXED | Grade check JC fails on overlapping and ordinary-word glossary terms |
 | BUG-021 | OPEN - NEEDS DECISION | `grade_checks` crashes on Windows when it prints a line with "｜" |
-| BUG-022 | FIXED ON BRANCH | The `bilingual_coverage_audit.py` command line always audits as zh-tw, so a correct vi book fails |
+| BUG-022 | FIXED | The `bilingual_coverage_audit.py` command line always audits as zh-tw, so a correct vi book fails |
 
 ## BUG-001: EPUBs that pack several chapters into one spine file extract as a few huge items
 
@@ -248,13 +248,13 @@ States: FIXED (done, merged) / FIXED ON BRANCH (done, PR not merged) / FIXED, WI
 
 ## BUG-022: The `bilingual_coverage_audit.py` command line always audits as zh-tw, so a correct vi book fails
 
-**STATE: FIXED ON BRANCH** (2026-11-17, PR #41, not merged yet)
+**STATE: FIXED** (2026-11-17, PR #41)
 
 **Symptom:** `python -m scripts.bilingual_coverage_audit --source <src.epub> --output <vi_book.epub>` on the finished *The Personal MBA* output prints `bilingual_coverage_audit: FAIL` with 3077 "missing adjacent zh after: ..." lines (checked 2026-11-17). The same book passes in the Grade checks (A1: 0 FAIL lines).
 **Root cause:** `main()` takes only `--source` and `--output`, and `audit()` is called without a profile, so it defaults to `ZH_TW`. A Vietnamese sibling is not Han text, so every paragraph counts as untranslated. Found by running the command that `SKILL.md` gives (lines 864-866).
 **Reachability:** Any vi book where someone follows the skill's QA step by hand. The verdict is wrong (a false FAIL), not just the wording. The success line and docstring ("Han translations") are also zh-only (left open in BUG-005). Not checked: whether `structural_audit.py` and `translation_quality_audit.py` have the same gap in their command lines.
 **Options:** (a) add a `--lang` option (default `zh-tw`, so current zh-tw use is unchanged) and pass `get_profile(...)` to `audit()`; (b) read the language from the book folder (`state.json`) when `--book-dir` is given; (c) leave the code and say in `SKILL.md` that this command line is zh-tw only, pointing vi books to the `audit_suite` run.
-**Status:** logged 2026-11-17; waiting for a decision. Not fixed. Recommendation: (b). `translation_quality_audit.py` already works this way (BUG-003): optional `--book-dir`, language from `state.json` through `audit_suite._profile_for_book`. Plan in the PR that fixes it. FIXED ON BRANCH 2026-11-17, PR #41 (option b): `--book-dir` is optional; the profile comes from state.json `target_lang`; with no `--book-dir`, or no `state.json` in it, the command warns on stderr and audits as zh-tw (the user asked for this warning). The success line names the language (zh-tw text unchanged), and the SKILL.md QA step passes `--book-dir`. *The Personal MBA*: 3077 FAIL lines before, PASS with 0 after. Not covered: a `state.json` that exists but has no `target_lang` is read as zh-tw without a warning (shared `_profile_for_book`, left alone).
+**Status:** logged 2026-11-17; waiting for a decision. Not fixed. Recommendation: (b). `translation_quality_audit.py` already works this way (BUG-003): optional `--book-dir`, language from `state.json` through `audit_suite._profile_for_book`. Plan in the PR that fixes it. FIXED 2026-11-17, PR #41 merged (option b): `--book-dir` is optional; the profile comes from state.json `target_lang`; with no `--book-dir`, or no `state.json` in it, the command warns on stderr and audits as zh-tw (the user asked for this warning). The success line names the language (zh-tw text unchanged), and the SKILL.md QA step passes `--book-dir`. *The Personal MBA*: 3077 FAIL lines before, PASS with 0 after. Not covered: a `state.json` that exists but has no `target_lang` is read as zh-tw without a warning (shared `_profile_for_book`, left alone).
 
 <!--
 ## BUG-001: <short symptom>

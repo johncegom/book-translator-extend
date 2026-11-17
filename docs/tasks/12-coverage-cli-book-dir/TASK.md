@@ -1,6 +1,6 @@
 # Task: Phase 12 — Coverage audit command line picks the language from the book folder (BUG-022)
 
-Status: in progress. Plan approved by the user 2026-11-17, with one answer: warn when there is no `state.json`.
+Status: done 2026-11-17 (PR #41 merged, `d490779`). Plan approved by the user 2026-11-17, with one answer: warn when there is no `state.json`.
 
 Related: BUG-022, BUG-005 (left the success line open), BUG-003 (the pattern to copy).
 
@@ -22,10 +22,10 @@ Out: `translation_quality_audit.py` (it already has `--book-dir`; it does not wa
 ## Definition of Done
 
 - [x] Tests first, seen red: vi book passes with `--book-dir`; no `--book-dir` warns on stderr; `--book-dir` without `state.json` warns; unregistered `target_lang` raises `ValueError`; zh-tw success line unchanged.
-- [ ] Existing tests are unedited and pass; `pytest -q` passes (769 passed, 269 skipped: done); CI green on ubuntu 3.10/3.12 and windows 3.12 (pending on PR #41).
+- [x] Existing tests are unedited and pass; `pytest -q` passes (769 passed, 269 skipped); CI run 43936583478 green on ubuntu 3.10/3.12 and windows 3.12 (PR #41).
 - [x] Real check on *The Personal MBA* with `--book-dir`: PASS or WARN like Grade A1, not 3077 FAIL lines.
 - [x] `SKILL.md` QA snippet passes `--book-dir` to the coverage and quality audits.
-- [x] BUG-022 is FIXED ON BRANCH in the table and the entry, with the PR link. Ledger row links the PR.
+- [x] BUG-022 is FIXED in the table and the entry, with the PR link. Ledger row links the PR.
 
 ## Test Plan
 
