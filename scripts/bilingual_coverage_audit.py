@@ -80,6 +80,8 @@ def _audit_with_warnings(
                 # a scope change from "stop faking coverage". They go amber; the
                 # decision to promote them is the user's.
                 if _is_newly_in_scope(text):
+                    if _is_marked_translation(sibling, text):
+                        continue
                     warnings.append(message)
                     continue
                 failures.append(message)
@@ -236,6 +238,23 @@ _LEGACY_MIN_LENGTH = LEGACY_ENGLISH_MIN_LENGTH
 
 def _is_newly_in_scope(text: str) -> bool:
     return len(text) < _LEGACY_MIN_LENGTH
+
+
+def _is_marked_translation(sibling, source_text: str) -> bool:
+    """Short-line rule (BUG-018): the next paragraph is a `tgt` paragraph that differs from the source
+    and has a non-ASCII letter the source lacks.
+
+    The language detector rejects many correct short Vietnamese labels ("Sự chú ý") because they use only
+    letters shared with French or Portuguese. A new non-ASCII letter, not punctuation and not a letter
+    copied from the source, keeps English near-echoes ("Read replicas" to "• Read replica") amber.
+    The `tgt` class means assemble wrote a string there, not that this line was translated (DECISION-020).
+    """
+    if sibling is None or "tgt" not in (sibling.get("class") or []):
+        return False
+    target = _clean(sibling.get_text(" ", strip=True))
+    if not target or target == source_text:
+        return False
+    return bool({c for c in target if c.isalpha() and ord(c) > 127} - set(source_text))
 
 
 def audit(*args, **kwargs):

@@ -1,6 +1,6 @@
 # Task: Phase 13 — Short-line coverage accepts a marked translation with a new accented letter (BUG-018)
 
-Status: awaiting approval of the DoD and Test Plan. Advise ran 2026-11-20 (`docs/eagd-log.md`).
+Status: done 2026-11-20 (DoD approved by the user 2026-11-20; PR open). Advise ran 2026-11-20 (`docs/eagd-log.md`).
 
 Related: BUG-018 (detector rejects short Vietnamese labels). The detector stays untouched: counting capitalised tokens flips three pinned tests (`test/test_vi_detector_phase3.py:38-44`, audit test at 158) and the same function decides which source lines are skipped; a gated detector rule only gave 305 to 271 warnings.
 
@@ -30,11 +30,11 @@ Short-line warnings 585. Variant clears 355 (Scarcity 8 of 16, System Design Int
 
 ## Definition of Done
 
-- [ ] Tests first, seen red (a, b to e and f may be green already): (a) vi "Attention" with `tgt tgt-vi` "Sự chú ý" gives no warning; (b) exact echo "Begin Reading" still warns; (c) "Data centers" to "Data center" still warns; (d) "Reid" to "—Reid" (punctuation only) still warns; (e) "He met Nguyễn in the market." to "He met Nguyễn at the market." still warns; (f) sibling without the `tgt` class still warns; (g) a 50+ character source with a tgt line the detector rejects is still a FAILURE; (h) zh-tw short "Reid" to "—Reid" with `tgt tgt-zh` still warns.
-- [ ] Existing tests are unedited and pass; `pytest -q` passes; CI green on ubuntu 3.10/3.12 and windows 3.12.
-- [ ] Real check: the audit on *The Personal MBA* gives about 6 warnings (was 305), 0 failures, and on System Design Interview about 213 (was 255).
-- [ ] `docs/DECISIONS.md` entry (tradeoff and the known limit above).
-- [ ] BUG-018 updated: FIXED WITH A LIMIT in the table and the entry, with the PR link; ledger row links the PR.
+- [x] Tests first, seen red (only (a) was red; the guards were green and were proven to bite by a mutation check with the naive rule): (a) vi "Attention" with `tgt tgt-vi` "Sự chú ý" gives no warning; (b) exact echo "Begin Reading" still warns; (c) "Data centers" to "Data center" still warns; (d) "Reid" to "—Reid" (punctuation only) still warns; (e) "He met Nguyễn in the market." to "He met Nguyễn at the market." still warns; (f) sibling without the `tgt` class still warns; (g) a 50+ character source with a tgt line the detector rejects is still a FAILURE; (h) zh-tw short "Reid" to "—Reid" with `tgt tgt-zh` still warns.
+- [x] Existing tests are unedited and pass; `pytest -q` passes (777 passed, 269 skipped). [ ] CI green on ubuntu 3.10/3.12 and windows 3.12 (pending on the PR).
+- [x] Real check: *The Personal MBA* 6 warnings (was 305), 0 failures; System Design Interview 213 (was 255); Scarcity 8 (16); Orwell 3 (9).
+- [x] `docs/DECISIONS.md` entry (DECISION-020) (tradeoff and the known limit above).
+- [x] BUG-018 updated: FIXED WITH A LIMIT in the table and the entry, with the PR link; ledger row links the PR.
 
 ## Test Plan
 
@@ -46,3 +46,4 @@ Short-line warnings 585. Variant clears 355 (Scarcity 8 of 16, System Design Int
 ## Progress notes
 
 - 2026-11-20: detector options R2 and R4 measured and not adopted (log: BUG-018). Audit-side rule measured: option 3 clears 383, "3b" 360, Advise variant 355 of 585. Advise answered (opus, claude-opus-5-5).
+- 2026-11-20: approved, implemented. 8 new tests; the mutation check (naive any-non-ASCII rule) turned 3 guards red. 777 passed / 269 skipped. Real books match the prediction. Open: CI and merge.
