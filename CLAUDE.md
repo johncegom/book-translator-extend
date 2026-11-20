@@ -17,6 +17,7 @@ This repo was forked from `fredchu/book-translator` but is now independent. Do n
 
 ## Way of working (Tier 2 — Standard)
 - **Task approval:** before implementing a phase, its `docs/tasks/<NN-slug>/TASK.md` must have a Definition of Done and Test Plan (with exact commands) that the user has approved. Fill the Program design section when the work touches several files or you will generate a substantial chunk of code. Tick sub-tasks as you go so an interrupted session can resume from the doc.
+- **Bug fix versus phase:** a logged bug whose entry already has a root cause and a chosen option goes straight to a fix PR. The user's decision on the bug entry is the approval; put the Definition of Done and the test list in the PR description, and skip `TASK.md` and the ledger row. Open a phase only when the work has several steps to resume, needs ground-truth TDD against the old code, is a new feature or touches many files, or still has real alternatives to weigh.
 - **Ledger:** update `docs/LEDGER.md` when a phase starts, blocks or finishes. A phase is `done` only when its DoD is fully checked and the Evidence cell links the PR or commit.
 - **Decision log:** add an entry for a real tradeoff. Skip routine or trivially reversible choices.
 - **Bug log:** log a defect with symptom, root cause (or "unknown"), and reachability. Logging is not fixing: wait for an explicit decision before applying the fix. Exception: a live security hole or data-loss path gets flagged to the user immediately.
