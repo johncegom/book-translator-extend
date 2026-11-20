@@ -23,7 +23,7 @@ States: FIXED (done, merged) / FIXED ON BRANCH (done, PR not merged) / FIXED, WI
 | BUG-009 | CLOSED - DOCUMENTED, NOT FIXED IN CODE | Reference-list and URL paragraphs are not exempted automatically in a vi book |
 | BUG-010 | FIXED, WITH A LIMIT | `state.json` has no protection against concurrent writers |
 | BUG-011 | FIXED, WITH A LIMIT | A reply with no `[[PARA_n]]` markers passes `validate_translation` but crashes extraction |
-| BUG-012 | PARTLY FIXED | Text inside HTML tables is dropped from the paragraph list, so it is never translated |
+| BUG-012 | CLOSED - DOCUMENTED, NOT FIXED IN CODE | Text inside HTML tables is dropped from the paragraph list, so it is never translated |
 | BUG-013 | OPEN - NEEDS DECISION | Short colloquial Vietnamese dialogue with names and French words is rejected by `is_target_text` |
 | BUG-014 | OPEN - NEEDS DECISION | A `<blockquote>` feature box with several `<p>` is translated and paired as one block |
 | BUG-015 | OPEN - NEEDS DECISION | Endnote lines with a translated lead phrase and an English citation fail the coverage audit |
@@ -147,13 +147,13 @@ States: FIXED (done, merged) / FIXED ON BRANCH (done, PR not merged) / FIXED, WI
 
 ## BUG-012: Text inside HTML tables is dropped from the paragraph list, so it is never translated
 
-**STATE: PARTLY FIXED** (extractor warns about table text (b); it still does not translate table cells)
+**STATE: CLOSED - DOCUMENTED, NOT FIXED IN CODE** (2026-11-20; extractor warns about table text; cells are translated by hand, see SKILL.md Step 7)
 
 **Symptom:** *Down and Out in Paris and London* (2026-11-13): three short verses sit in `<table class="simplelist">` blocks (item_006, item_028, item_033; six lines in all). `dispatch.html_to_paragraphs` does not return them, so the translators never saw them, and the bilingual EPUB shows them in English only. Every audit passed: the lines are not in the paragraph list, so nothing checks them. A subagent noticed the gap (item_028: "the verse itself is missing from the source").
 **Root cause:** not traced into `extract_paragraphs` yet; the check was that no `<td>` text appears in any extracted paragraph for these three items (0 of 6). The tables are verse or lists, not data tables.
 **Reachability:** Any EPUB with poetry, lyrics or lists laid out as tables. Silent: no audit sees it.
 **Options:** (a) make the extractor return table cell text as paragraphs (touches shared extraction code; needs a zh-tw golden check); (b) detect dropped blocks at extract time and list them for the user; (c) document it and translate such blocks by hand.
-**Status:** logged 2026-11-13; user chose 1a + 1b on 2026-11-13. **Partly fixed:** (b) `extract_epub.extract` now prints a stderr warning listing the items and cells whose table text is not extracted (`skipped_table_text`, `test/test_extract_table_warning.py`, test first; manifest and chapters unchanged). The extractor still does not translate table cells (option a not taken). In this book the six lines were translated by hand: `table_cells_vi.json` plus `apply_table_cells.py` in the book folder, applied to the assembled EPUB after every assemble.
+**Status:** logged 2026-11-13; user chose 1a + 1b on 2026-11-13. **Partly fixed:** (b) `extract_epub.extract` now prints a stderr warning listing the items and cells whose table text is not extracted (`skipped_table_text`, `test/test_extract_table_warning.py`, test first; manifest and chapters unchanged). The extractor still does not translate table cells (option a not taken). In this book the six lines were translated by hand: `table_cells_vi.json` plus `apply_table_cells.py` in the book folder, applied to the assembled EPUB after every assemble. **CLOSED 2026-11-20 as documented** (user chose the docs-only update). Measured on the source EPUBs of the four finished vi books: tables hold 6 skipped cells in total, all in *Down and Out in Paris and London* (3 verses of 2 lines); *Scarcity* and *System Design Interview* have no tables; the one table in *The Personal MBA* has 10 cells that all hold block tags, so they were already extracted. The cause is that `td` and `th` are not in `TEXT_TAGS` (`scripts/content_blocks.py`), so only cells with bare text are dropped; the rewriter's `insert_after` would also put a `<p>` straight under `<tr>`. Not taken: option (a), a leaf-cell extractor with an in-cell rewriter and a zh-tw golden check, because it does not pay for 6 lines in one of four books. Not taken: a manifest key plus an `audit_suite` WARN. Revisit if a second book hits the gap, or if a data table with bare cells appears. SKILL.md now tells the operator what to do when the extract warning appears.
 
 ## BUG-013: Short colloquial Vietnamese dialogue with names and French words is rejected by `is_target_text`
 
