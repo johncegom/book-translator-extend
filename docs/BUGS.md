@@ -32,7 +32,7 @@ States: FIXED (done, merged) / FIXED ON BRANCH (done, PR not merged) / FIXED, WI
 | BUG-018 | FIXED, WITH A LIMIT | Short Vietnamese labels whose words use only shared accented letters fail `is_target_text` |
 | BUG-019 | FIXED | Grade check N1 reports false alarms for footnote numbers and decimals |
 | BUG-020 | PARTLY FIXED | Grade check JC fails on overlapping and ordinary-word glossary terms |
-| BUG-021 | OPEN - NEEDS DECISION | `grade_checks` crashes on Windows when it prints a line with "｜" |
+| BUG-021 | FIXED | `grade_checks` crashes on Windows when it prints a line with "｜" |
 | BUG-022 | FIXED | The `bilingual_coverage_audit.py` command line always audits as zh-tw, so a correct vi book fails |
 
 ## BUG-001: EPUBs that pack several chapters into one spine file extract as a few huge items
@@ -238,13 +238,13 @@ States: FIXED (done, merged) / FIXED ON BRANCH (done, PR not merged) / FIXED, WI
 
 ## BUG-021: `grade_checks` crashes on Windows when it prints a line with "｜"
 
-**STATE: OPEN - NEEDS DECISION** (not fixed; `PYTHONIOENCODING=utf-8` avoids it)
+**STATE: FIXED** (2026-11-20, `scripts/console_utf8.py`)
 
 **Symptom:** `python -m scripts.grade_checks ...` on *The Personal MBA* printed A1 to E2, then stopped with `UnicodeEncodeError: 'charmap' codec can't encode character '｜'` at `print(f"{cid}: ...")` (`scripts/grade_checks.py:327`). E3, E4, N1, G1 and E5 never printed, and the exit was not clean.
 **Root cause:** On this Windows machine stdout uses cp1252, which has no "｜" (U+FF5C). Check E3 puts a nav title with "｜" into its evidence text, and `print` fails on it. Not yet checked: whether a console set to UTF-8 (`chcp 65001`) or a redirect to a file behaves the same.
 **Reachability:** Any bilingual book on a Windows console with a legacy code page, because every nav title and label carries "｜". Not tested on Linux or macOS, where stdout is normally UTF-8; CI runs the tests, not this command line. It cuts the Grade script output short without a pass or fail line, so a run could be read as complete when it is not.
 **Options:** (a) in `main`, call `sys.stdout.reconfigure(encoding="utf-8")` before printing; (b) print with `errors="replace"`; (c) leave it and document `PYTHONIOENCODING=utf-8` in `docs/grade-rubric.md`.
-**Status:** logged 2026-11-17; waiting for a decision. Not fixed. Measured wider 2026-11-20 on *The Personal MBA*, no `PYTHONIOENCODING` (stdout is cp1252 even when piped or redirected): `grade_checks --sample` crashes on its first Vietnamese letter with 0 lines printed, so the judged checks J1, J4 and JC cannot run; `bilingual_coverage_audit` crashes on its PASS line ("Tiếng Việt", added in Phase 12, PR #41) and exits 1 for a passing book; `translation_quality_audit` and `audit_suite` were fine on this book. `PYTHONUTF8=1` avoids all of it. Option (b) `errors="replace"` is now ruled out: it would corrupt the `--sample` JSON that Grade judges. Plan: Phase 14 (`docs/tasks/14-utf8-console-output/TASK.md`), a small helper that reconfigures stdout and stderr to UTF-8, called from the four command lines that print book text.
+**Status:** logged 2026-11-17; waiting for a decision. Not fixed. Measured wider 2026-11-20 on *The Personal MBA*, no `PYTHONIOENCODING` (stdout is cp1252 even when piped or redirected): `grade_checks --sample` crashes on its first Vietnamese letter with 0 lines printed, so the judged checks J1, J4 and JC cannot run; `bilingual_coverage_audit` crashes on its PASS line ("Tiếng Việt", added in Phase 12, PR #41) and exits 1 for a passing book; `translation_quality_audit` and `audit_suite` were fine on this book. `PYTHONUTF8=1` avoids all of it. Option (b) `errors="replace"` is now ruled out: it would corrupt the `--sample` JSON that Grade judges. Plan: Phase 14 (`docs/tasks/14-utf8-console-output/TASK.md`), a small helper that reconfigures stdout and stderr to UTF-8, called from the four command lines that print book text. FIXED 2026-11-20 as a plain bug fix (no phase; see `CLAUDE.md`): `use_utf8_output()` is the first call in `main()` of `grade_checks`, `bilingual_coverage_audit`, `translation_quality_audit` and `audit_suite`. Tests first (5, red before; a cp1252 stdout reproduces it on any OS). *The Personal MBA* with no UTF-8 setting: `grade_checks` 14 lines, `--sample 2` JSON, coverage audit PASS with exit 0. Not covered: `structural_audit.py` and `href_resolve_audit.py` (not read in full; they print no book text as far as measured).
 
 ## BUG-022: The `bilingual_coverage_audit.py` command line always audits as zh-tw, so a correct vi book fails
 

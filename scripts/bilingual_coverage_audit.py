@@ -208,6 +208,11 @@ def _profile_from_book_dir(book_dir: Path | None):
 
 
 def main(argv: list[str] | None = None) -> int:
+    try:
+        from scripts.console_utf8 import use_utf8_output
+    except ModuleNotFoundError:  # pragma: no cover - direct script execution path
+        from console_utf8 import use_utf8_output  # type: ignore
+    use_utf8_output()  # BUG-021: a legacy console code page must not crash the report
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
