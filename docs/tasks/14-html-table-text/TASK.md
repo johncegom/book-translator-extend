@@ -1,59 +1,55 @@
-# Task: Phase 14 — Translate text inside HTML tables (BUG-012 option a)
+# Task: Phase 14 — Table text warning at the audit gate (BUG-012 detection)
 
-Status: approved 2026-11-26, not started. Design A chosen by the user 2026-11-26.
+Status: approved 2026-11-26, not started. Decisions from the user 2026-11-26: a 5th audit in `audit_suite`; WARN only (no Grade check); the earlier code fix is dropped.
 
-Related: BUG-012 (extractor drops table cell text; option b, the extract warning, is already merged). DECISION entry to add.
+Related: BUG-012 (closed 2026-11-20 as documented; the code fix was declined). This phase does not translate table cells. It makes the gap visible at the audit gate, where today every audit passes.
+
+Folder name `14-html-table-text` is kept from the first draft so the ledger link stays valid.
 
 ## Why
 
-*Down and Out in Paris and London* has three verses in `<table class="simplelist">` (six lines). The extractor never returned them, every audit passed, and they stayed English. They were translated by hand (`table_cells_vi.json` plus `apply_table_cells.py`). The cause is that `content_blocks.TEXT_TAGS` has no `td` or `th`, and dispatch, assembly and the audits all use that one walker.
+Table cells with bare text are never extracted, so they are never translated and no audit sees them. The only guard is a stderr warning during `extract_epub`, printed once and easy to miss. After assembly all audits pass. A book can ship with English verse or list items in it and nothing says so.
 
 ## Scope
 
-In: `scripts/content_blocks.py` (cells as text blocks, with guards); `scripts/bilingual_rewriter.py` (where a cell translation is inserted); `scripts/bilingual_coverage_audit.py` (where the audit looks for it); `scripts/extract_epub.py` (`skipped_table_text` narrows to what is still skipped); new tests; DECISIONS entry; docs.
-Out: the detector and every threshold; `nav_builder`; the hand-made `apply_table_cells.py` in existing book folders (they keep working, they are not migrated).
+In: new `scripts/table_text_audit.py` (`run(output, book_dir) -> AuditResult`, name `table_text`); one line in `audit_suite.run_all` (appended as the 5th result); new tests; one edit to an existing test (below); SKILL.md Step 7 and Step 8 text; BUG-012 note; DECISIONS entry; ledger.
+Out: the walker (`content_blocks.py`), the rewriter, every other audit, `grade_checks` and the Grade rubric (WARN only, decided), any translation of table cells.
 
-## Design (Design A)
+## Design
 
-1. **Walker:** `td` and `th` join the text tags. A cell is a text block only when it has at least one letter and holds no `p`, `li`, `blockquote`, `pre`, `dt` or `dd` (those keep their own handling). `translate="no"` still wins.
-2. **Insert:** for a cell, the translation is appended inside the cell as `<p class="tgt ...">`, not inserted after it. Inserting after a `td` would put a `<p>` inside `<tr>`, which is invalid HTML.
-3. **Audit:** for a cell, look for the `p.tgt` inside it, not at the next sibling.
-4. **Warning:** the extract warning stays for table text that is still skipped (cells with no letters are not listed).
-5. **Known limit, to put in DECISIONS:** a data table with words in its cells is now translated cell by cell. Short cells may show as short-line warnings.
-6. **Mid-run books:** the paragraph list of a chapter with a table changes. Re-extract an unfinished book before resuming it. Finished books are not affected.
+1. Read `<book_dir>/manifest.json`. For each spine item with `output_strategy == "translate"`, read the chapter HTML that extraction wrote, `<book_dir>/<href>` (for example `chapters/item_006.html`). This is the same input the extract warning used, so split files need no special handling. Checked 2026-11-26 on the *Down and Out* folder: `chapters/` exists with 82 files and the manifest `href` values point into it.
+2. Find skipped cells with the existing `extract_epub.skipped_table_text`, so the audit and the extract warning always agree.
+3. A skipped cell is handled when its text is in `translations/source_only.json` (the same exceptions the coverage audit reads from the output EPUB), or when the output EPUB has a `td`/`th` with that text whose row is followed by a row with class `tgt` (what the hand method `apply_table_cells.py` writes).
+4. Result: `pass` when every skipped cell is handled; `warn` otherwise, listing item, file and the first few cells, with `details` holding the counts. Never `fail`. If `manifest.json` cannot be read, or a translate item's chapter file is missing, the result is `warn` with "not checked: <reason>", never a silent pass.
+5. Known limit, for DECISIONS: a cell next to an image is skipped by the extractor and is reported too, which is correct. A table that sits only on a `source_only` item is not checked, the same as the extract warning.
 
 ## Definition of Done
 
-- [ ] Ground truth first: paragraph lists of 3 non-table chapters from `git show bb0eb35:scripts/content_blocks.py` are recorded as golden cases; the new code matches them exactly.
-- [ ] Tests first, seen red: (a) verse table gives one paragraph per cell; (b) number-only or symbol-only cells give none; (c) `<td><p>text</p></td>` gives one paragraph, not two; (d) `td translate="no"` gives none; (e) the rewriter puts `p.tgt` inside the `td`, never as a child of `tr`; (f) coverage audit passes when the cell has a translation and fails when it has none; (g) a table-free chapter gives output identical to before.
-- [ ] Existing tests are unedited and pass; `pytest -q` passes. CI green on main after merge.
-- [ ] Real check on *Down and Out* (source `D:\E-Books\epub\orwell-down-and-out-in-paris-and-london.epub`, book folder `D:\E-Books\translations\orwell-down-and-out-in-paris-and-london`): re-extract to a new empty folder, the six verse lines appear as paragraphs; after translating only those, the assembled EPUB shows Vietnamese inside the table cells with no `apply_table_cells.py` step; `bilingual_coverage_audit --book-dir` has no table failure. The existing book folder and EPUB are not overwritten.
-- [ ] `zh-tw` output for a book without tables is identical to `bb0eb35`.
-- [ ] `docs/DECISIONS.md` entry; BUG-012 updated (FIXED, with the limit from item 5 if it holds); ledger row links the PR.
+- [ ] Tests first, seen red: (a) source with bare-text cells and an output with no handling gives `warn` naming item and cell; (b) the same cells listed in `source_only.json` give `pass`; (c) the same cells followed by a `tgt` row in the output give `pass`; (d) a source with no tables gives `pass`; (e) a source whose table cells hold `<p>` gives `pass` (already extracted); (f) a table only on a `source_only` item gives `pass`; (g) missing `manifest.json`, or a missing chapter file, gives `warn` "not checked"; (h) `run_all` returns the new result last, and `format_summary` counts it.
+- [ ] One existing test is edited, and only for the count: `test/test_audit_suite.py::test_run_all_orders_and_aggregates_animal_farm` expects 5 names (new one last) and `5 PASS`. Every other existing test is unedited and passes.
+- [ ] `pytest -q` passes. CI green on main after the merge.
+- [ ] Real check on the four finished vi books with `python -m scripts.audit_suite --source <src.epub> --output <vi.epub> --book-dir <book>`: *Down and Out* (hand step applied) gives `table_text: PASS`; the same book with its hand-added rows removed from a scratch copy gives `WARN` naming the six cells; the other three give `PASS` (no skipped cells, measured 2026-11-20). Results are shown as real output.
+- [ ] SKILL.md: Step 8 says 5 audits; Step 7 says where the audit reports table cells. `docs/BUGS.md` BUG-012 stays CLOSED and gets one line naming this phase and the Alice finding (a contents table with bare cells). DECISIONS entry (WARN not FAIL, no Grade check, the code fix built and dropped, with the reasons). Ledger row links the PR.
 
 ## Test Plan
 
-- `git show bb0eb35:scripts/content_blocks.py` in a scratch worktree to record the golden paragraph lists.
-- `pytest -q test/test_content_blocks.py test/test_extract_table_warning.py` (new cases added)
-- `pytest -q test/test_bilingual_rewriter.py test/test_bilingual_coverage_audit.py`
+- `pytest -q test/test_table_text_audit.py` (new)
+- `pytest -q test/test_audit_suite.py test/test_grade_checks.py test/test_lang_profile_vi.py`
 - `pytest -q`
-- Real check: `python -m scripts.extract_epub` on the source EPUB into an empty folder, then compare paragraph counts of item_006, item_028 and item_033 with the old extract (BUG-012 lists them).
+- Real check, per book: `python -m scripts.audit_suite --source "<src.epub>" --output "<vi.epub>" --book-dir "<book folder>"` for the four books under `D:\E-Books\translations`, sources under `D:\E-Books\epub` (the source is still a required argument of the command). The existing book folders and EPUBs are read only; the "hand rows removed" case uses a copy in a scratch folder.
 
 ## Program design
 
-Files touched: `content_blocks.py` (walker), `bilingual_rewriter.py` (insert), `bilingual_coverage_audit.py` (look-up), `extract_epub.py` (skipped list). One shared predicate, `is_cell_text_block(node)`, in `content_blocks.py` is used by all three so the rule lives in one place.
+One new file (`table_text_audit.py`, about 80 lines): `run()` plus two helpers (`_skipped_cells(book_dir, manifest)`, `_handled(output, source_only)`). `audit_suite.run_all` gets one more list item. No change to shared extraction code.
 
 ## Sub-tasks
 
-- [ ] Record golden cases from `bb0eb35`
 - [ ] Write tests, see red
-- [ ] Walker and predicate
-- [ ] Rewriter insert
-- [ ] Audit look-up
-- [ ] Narrow the extract warning
-- [ ] Real check on *Down and Out*
-- [ ] DECISIONS, BUGS, ledger
+- [ ] `table_text_audit.py`
+- [ ] Wire into `run_all`; edit the one count test
+- [ ] Real check on the four books
+- [ ] SKILL.md, BUG-012 note, DECISIONS, ledger
 
 ## Progress notes
 
-- 2026-11-26: plan drafted. Findings: no table exists in any golden or fixture file (only `test/test_extract_table_warning.py`), so the oracle cases cannot catch a regression here; the real-book comparison above covers it.
+- 2026-11-26: first draft was a code fix (cells as text blocks). Built, tested (797 passed) and oracle-checked on table-free chapters, then dropped by the user in favour of a warning. Reasons recorded for DECISIONS: how a real reader draws a `<p>` inside a `<td>` was not checked, a resumed half-translated book could pair translations with the wrong paragraphs, and the 2026-11-20 measurement said 6 lines in one of four books.
