@@ -20,7 +20,7 @@ Plan and rationale: `docs/plans/2026-11-11-vietnamese-language-profile.md`. This
 | 11 | Coverage audit failure text names the language (BUG-005) | done 2026-11-17 | PR #38 merged (`13db0a6`); 764 passed / 269 skipped on main (local); CI run 43935572921 on main | `docs/tasks/11-coverage-message-language/TASK.md` |
 | 12 | Coverage audit command line picks the language (BUG-022) | done 2026-11-17 | PR #41 merged (`d490779`); CI run 43936583478 green on ubuntu 3.10/3.12 and windows 3.12, 769 passed / 269 skipped; *The Personal MBA* PASS with `--book-dir` | `docs/tasks/12-coverage-cli-book-dir/TASK.md` |
 | 13 | Short-line coverage accepts a marked translation (BUG-018) | done 2026-11-20 | PR #45 merged (`c585e68`); CI run 44585266720 green; 777 passed / 269 skipped; *The Personal MBA* 305 to 6 short-line warnings | `docs/tasks/13-short-line-coverage/TASK.md` |
-| 14 | Translate text inside HTML tables (BUG-012 option a) | not started | | |
+| 14 | Translate text inside HTML tables (BUG-012 option a) | not started (TASK.md approved 2026-11-26) | | `docs/tasks/14-html-table-text/TASK.md` |
 | 15 | Endnote lines pass the coverage audit without hand-written exemptions (BUG-015) | not started | | |
 | 16 | Check other callers of `validate_translation` for marker-less replies (BUG-011) | not started | | |
 | 17 | Decide whether the blockquote feature box stays one block (BUG-014) | not started | | |
