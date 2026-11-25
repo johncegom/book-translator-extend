@@ -833,6 +833,16 @@ assemble; assembly keeps your entries and adds its own. A listed paragraph also 
 the echo check, so list only lines you have read. A heading-based exemption in the code
 was considered and declined (BUG-009, option 2).
 
+**Table text is not translated (BUG-012).** The extractor reads text only from
+paragraph-like tags, so a table cell whose text sits directly in the `<td>` (verse or a
+simple list) is never sent to a translator and no audit sees it. Cells that hold a `<p>`
+are fine. `extract_epub` prints `WARNING: N item(s) contain table text that is not
+extracted` on stderr; if you see it, read the cells it lists and translate them by hand
+after assembly (a small mapping of source cell to translation, applied to the assembled
+EPUB after every assemble), or leave them in the source language on purpose. Measured on
+four finished vi books: 6 cells in one book, all verse. Code support was declined as not
+worth the shared-code risk (BUG-012).
+
 Assembly fails closed: any `translate` item missing its `item_NNN_translation.txt`
 is a hard error. Source-only pages are emitted without translation, and explicit
 drops require a reason.
