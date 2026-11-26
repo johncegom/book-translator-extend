@@ -17,7 +17,7 @@ Pipeline:
         write chapters/<id>_translation.txt + translation_log/<id>.json
         update carryover (last 200 chars), save state.json
     assemble.assemble (strict_nav=False — ollama path may have nav gaps)
-    audit_suite.run_all (4 deterministic gates; --no-audit to skip)
+    audit_suite.run_all (5 deterministic gates; --no-audit to skip)
 
 Example:
     python3 scripts/translate_book_ollama.py \\
@@ -141,7 +141,7 @@ def build_parser() -> argparse.ArgumentParser:
                          help="skip the post-hoc seam-repair pass (only relevant when "
                               "--max-concurrent-requests > 1); repair re-translates each chunk "
                               "boundary paragraph with its real preceding translation as context")
-    parser.add_argument("--no-audit", action="store_true", help="skip the 4 deterministic audits at the end")
+    parser.add_argument("--no-audit", action="store_true", help="skip the 5 deterministic audits at the end")
     parser.add_argument("--no-resume", action="store_true", help="re-extract + re-translate from scratch")
     parser.add_argument("--limit", type=int, default=None, help="cap on chapters translated this run (debug)")
     return parser
@@ -1225,7 +1225,7 @@ def translate_single_book(book_path: Path, args: argparse.Namespace) -> dict[str
 
     audit_warning_records: list[dict[str, str]] = []
     if not args.no_audit:
-        print("[audit] running 4 deterministic gates", file=sys.stderr)
+        print("[audit] running 5 deterministic gates", file=sys.stderr)
         results = run_audits(source=book_path, output=out_epub, book_dir=book_dir)
         print(format_summary(results), file=sys.stderr)
         audit_warning_records = _record_audit_warnings(state, state_path, results)
