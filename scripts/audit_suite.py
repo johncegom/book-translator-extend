@@ -13,6 +13,7 @@ try:  # pragma: no cover - import mode depends on caller
     from .lang_profile import ZH_TW, get_profile
     from . import href_resolve_audit
     from . import structural_audit
+    from . import table_text_audit
     from . import translation_quality_audit
 except ImportError:  # pragma: no cover
     from audit_result import AuditResult  # type: ignore
@@ -20,6 +21,7 @@ except ImportError:  # pragma: no cover
     from lang_profile import ZH_TW, get_profile  # type: ignore
     import href_resolve_audit  # type: ignore
     import structural_audit  # type: ignore
+    import table_text_audit  # type: ignore
     import translation_quality_audit  # type: ignore
 
 
@@ -45,6 +47,7 @@ def run_all(source: Path, output: Path, book_dir: Path) -> list[AuditResult]:
         bilingual_coverage_audit.run(source, output, profile=profile),
         translation_quality_audit.run(output, book_dir=book_dir, profile=profile),
         href_resolve_audit.run(output),
+        table_text_audit.run(output, book_dir),
     ]
 
 

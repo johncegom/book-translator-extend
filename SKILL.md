@@ -839,9 +839,11 @@ simple list) is never sent to a translator and no audit sees it. Cells that hold
 are fine. `extract_epub` prints `WARNING: N item(s) contain table text that is not
 extracted` on stderr; if you see it, read the cells it lists and translate them by hand
 after assembly (a small mapping of source cell to translation, applied to the assembled
-EPUB after every assemble), or leave them in the source language on purpose. Measured on
-four finished vi books: 6 cells in one book, all verse. Code support was declined as not
-worth the shared-code risk (BUG-012).
+EPUB after every assemble: add a row with class `tgt` right after the source row), or leave
+them in the source language on purpose (list them in `source_only.json`). Step 8 repeats
+the warning as `table_text` after assembly, so the gap stays visible once the stderr line
+is gone. Measured on four finished vi books: 6 cells in one book, all verse. Code support
+for translating the cells was declined as not worth the shared-code risk (BUG-012).
 
 Assembly fails closed: any `translate` item missing its `item_NNN_translation.txt`
 is a hard error. Source-only pages are emitted without translation, and explicit
@@ -849,7 +851,7 @@ drops require a reason.
 
 ### Step 8: Audit gates
 
-All 4 deterministic audits run together via `audit_suite`:
+All 5 deterministic audits run together via `audit_suite`. The fifth, `table_text`, is WARN only: it lists table cells that extraction skipped (BUG-012) and that are neither in `translations/source_only.json` nor followed by a translated row in the output:
 
 ```bash
 python3 {baseDir}/scripts/audit_suite.py \

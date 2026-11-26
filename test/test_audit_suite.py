@@ -72,9 +72,10 @@ def test_run_all_orders_and_aggregates_animal_farm(tmp_path: Path):
         "bilingual_coverage",
         "translation_quality",
         "href_resolve",
+        "table_text",
     ]
     assert audit_suite.all_passed(results) is True
-    assert audit_suite.format_summary(results).splitlines()[0] == "4 PASS / 0 WARN / 0 FAIL"
+    assert audit_suite.format_summary(results).splitlines()[0] == "5 PASS / 0 WARN / 0 FAIL"
 
 
 @pytest.mark.skipif(not FIXTURE.is_file(), reason=f"fixture missing: {FIXTURE}")

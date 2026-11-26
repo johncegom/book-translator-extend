@@ -1,6 +1,6 @@
 # Task: Phase 14 — Table text warning at the audit gate (BUG-012 detection)
 
-Status: approved 2026-11-26, not started. Decisions from the user 2026-11-26: a 5th audit in `audit_suite`; WARN only (no Grade check); the earlier code fix is dropped.
+Status: in progress 2026-11-26 (implemented, PR pending). Decisions from the user 2026-11-26: a 5th audit in `audit_suite`; WARN only (no Grade check); the earlier code fix is dropped.
 
 Related: BUG-012 (closed 2026-11-20 as documented; the code fix was declined). This phase does not translate table cells. It makes the gap visible at the audit gate, where today every audit passes.
 
@@ -25,11 +25,11 @@ Out: the walker (`content_blocks.py`), the rewriter, every other audit, `grade_c
 
 ## Definition of Done
 
-- [ ] Tests first, seen red: (a) source with bare-text cells and an output with no handling gives `warn` naming item and cell; (b) the same cells listed in `source_only.json` give `pass`; (c) the same cells followed by a `tgt` row in the output give `pass`; (d) a source with no tables gives `pass`; (e) a source whose table cells hold `<p>` gives `pass` (already extracted); (f) a table only on a `source_only` item gives `pass`; (g) missing `manifest.json`, or a missing chapter file, gives `warn` "not checked"; (h) `run_all` returns the new result last, and `format_summary` counts it.
-- [ ] One existing test is edited, and only for the count: `test/test_audit_suite.py::test_run_all_orders_and_aggregates_animal_farm` expects 5 names (new one last) and `5 PASS`. Every other existing test is unedited and passes.
-- [ ] `pytest -q` passes. CI green on main after the merge.
-- [ ] Real check on the four finished vi books with `python -m scripts.audit_suite --source <src.epub> --output <vi.epub> --book-dir <book>`: *Down and Out* (hand step applied) gives `table_text: PASS`; the same book with its hand-added rows removed from a scratch copy gives `WARN` naming the six cells; the other three give `PASS` (no skipped cells, measured 2026-11-20). Results are shown as real output.
-- [ ] SKILL.md: Step 8 says 5 audits; Step 7 says where the audit reports table cells. `docs/BUGS.md` BUG-012 stays CLOSED and gets one line naming this phase and the Alice finding (a contents table with bare cells). DECISIONS entry (WARN not FAIL, no Grade check, the code fix built and dropped, with the reasons). Ledger row links the PR.
+- [x] Tests first, seen red (module absent, then 10 pass; a mutation that handles nothing turns 3 red): (a) source with bare-text cells and an output with no handling gives `warn` naming item and cell; (b) the same cells listed in `source_only.json` give `pass`; (c) the same cells followed by a `tgt` row in the output give `pass`; (d) a source with no tables gives `pass`; (e) a source whose table cells hold `<p>` gives `pass` (already extracted); (f) a table only on a `source_only` item gives `pass`; (g) missing `manifest.json`, or a missing chapter file, gives `warn` "not checked"; (h) `run_all` returns the new result last, and `format_summary` counts it.
+- [x] One existing test is edited, and only for the count (it needs a fixture that is not on this machine or in CI, so it was edited but not run): `test/test_audit_suite.py::test_run_all_orders_and_aggregates_animal_farm` expects 5 names (new one last) and `5 PASS`. Every other existing test is unedited and passes.
+- [x] `pytest -q` passes (794 passed, 269 skipped before the docs edits). [ ] CI green on main after the merge.
+- [x] Real check on the four finished vi books with `python -m scripts.audit_suite --source <src.epub> --output <vi.epub> --book-dir <book>`: *Down and Out* (hand step applied) gives `table_text: PASS`; the same book with its hand-added rows removed from a scratch copy gives `WARN` naming the six cells; the other three give `PASS` (no skipped cells, measured 2026-11-20). Results are shown as real output.
+- [x] SKILL.md: Step 8 says 5 audits; Step 7 says where the audit reports table cells. `docs/BUGS.md` BUG-012 stays CLOSED and gets one line naming this phase and the Alice finding (a contents table with bare cells). DECISIONS entry (WARN not FAIL, no Grade check, the code fix built and dropped, with the reasons). Ledger row links the PR.
 
 ## Test Plan
 
@@ -44,12 +44,13 @@ One new file (`table_text_audit.py`, about 80 lines): `run()` plus two helpers (
 
 ## Sub-tasks
 
-- [ ] Write tests, see red
-- [ ] `table_text_audit.py`
-- [ ] Wire into `run_all`; edit the one count test
-- [ ] Real check on the four books
-- [ ] SKILL.md, BUG-012 note, DECISIONS, ledger
+- [x] Write tests, see red
+- [x] `table_text_audit.py`
+- [x] Wire into `run_all`; edit the one count test
+- [x] Real check on the four books
+- [x] SKILL.md, BUG-012 note, DECISIONS (ledger row waits for the PR link)
 
 ## Progress notes
 
 - 2026-11-26: first draft was a code fix (cells as text blocks). Built, tested (797 passed) and oracle-checked on table-free chapters, then dropped by the user in favour of a warning. Reasons recorded for DECISIONS: how a real reader draws a `<p>` inside a `<td>` was not checked, a resumed half-translated book could pair translations with the wrong paragraphs, and the 2026-11-20 measurement said 6 lines in one of four books.
+- 2026-11-26: implemented. Real check: Down and Out PASS (hand rows applied), WARN naming 6 cells (rows removed in a scratch copy), Scarcity / System Design Interview / The Personal MBA PASS. Noticed, not part of this phase: `translation_quality` FAILS on System Design Interview with and without this change.
